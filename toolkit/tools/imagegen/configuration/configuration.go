@@ -6,63 +6,63 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
-	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/jsonutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/yamlutils"
+	"gopkg.in/yaml.v3"
 )
 
 // Artifact [non-ISO image building only] defines the name, type
 // and optional compression of the output Mariner image.
 type Artifact struct {
-	Compression string `json:"Compression"`
-	Name        string `json:"Name"`
-	Type        string `json:"Type"`
+	Compression string `json:"Compression" yaml:"Compression"`
+	Name        string `json:"Name" yaml:"Name"`
+	Type        string `json:"Type" yaml:"Type"`
 }
 
 // RawBinary allow the users to specify a binary they would
 // like to copy byte-for-byte onto the disk.
 type RawBinary struct {
-	BinPath   string `json:"BinPath"`
-	BlockSize uint64 `json:"BlockSize"`
-	Seek      uint64 `json:"Seek"`
+	BinPath   string `json:"BinPath" yaml:"BinPath"`
+	BlockSize uint64 `json:"BlockSize" yaml:"BlockSize"`
+	Seek      uint64 `json:"Seek" yaml:"Seek"`
 }
 
 // TargetDisk [kickstart-only] defines the physical disk, to which
 // Mariner should be installed.
 type TargetDisk struct {
-	Type  string `json:"Type"`
-	Value string `json:"Value"`
+	Type  string `json:"Type" yaml:"Type"`
+	Value string `json:"Value" yaml:"Value"`
 }
 
 // InstallScript defines a script to be run before or after other installation
 // steps and provides a way to pass parameters to it.
 type InstallScript struct {
-	Args string `json:"Args"`
-	Path string `json:"Path"`
+	Args string `json:"Args" yaml:"Args"`
+	Path string `json:"Path" yaml:"Path"`
 }
 
 // Group defines a single group to be created on the new system.
 type Group struct {
-	Name string `json:"Name"`
-	GID  string `json:"GID"`
+	Name string `json:"Name" yaml:"Name"`
+	GID  string `json:"GID" yaml:"GID"`
 }
 
 // RootEncryption enables encryption on the root partition
 type RootEncryption struct {
-	Enable   bool   `json:"Enable"`
-	Password string `json:"Password"`
+	Enable   bool   `json:"Enable" yaml:"Enable"`
+	Password string `json:"Password" yaml:"Password"`
 }
 
 // Config holds the parsed values of the configuration schemas as well as
 // a few computed values simplifying access to certain pieces of the configuration.
 type Config struct {
 	// Values representing the contents of the config JSON file.
-	Disks         []Disk         `json:"Disks"`
-	SystemConfigs []SystemConfig `json:"SystemConfigs"`
+	Disks         []Disk         `json:"Disks" yaml:"Disks"`
+	SystemConfigs []SystemConfig `json:"SystemConfigs" yaml:"SystemConfigs"`
 
 	// Computed values not present in the config JSON.
 	DefaultSystemConfig *SystemConfig // A system configuration with the "IsDefault" field set or the first system configuration if there is no explicit default.
@@ -238,11 +238,11 @@ func (c *Config) IsValid() (err error) {
 	return
 }
 
-// UnmarshalJSON Unmarshals a Config entry
-func (c *Config) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a Config entry
+func (c *Config) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeConfig Config
-	err = json.Unmarshal(b, (*IntermediateTypeConfig)(c))
+	err = value.Decode((*IntermediateTypeConfig)(c))
 	if err != nil {
 		return fmt.Errorf("failed to parse [Config]: %w", err)
 	}
@@ -259,7 +259,7 @@ func (c *Config) UnmarshalJSON(b []byte) (err error) {
 func Load(configFilePath string) (config Config, err error) {
 	logger.Log.Debugf("Reading config file from '%s'.", configFilePath)
 
-	err = jsonutils.ReadJSONFile(configFilePath, &config)
+	err = yamlutils.ReadYAMLFile(configFilePath, &config)
 	if err != nil {
 		return
 	}

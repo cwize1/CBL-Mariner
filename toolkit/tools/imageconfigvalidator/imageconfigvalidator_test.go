@@ -13,8 +13,8 @@ import (
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/configuration"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/installutils"
-	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/jsonutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/yamlutils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -156,7 +156,7 @@ func TestShouldFailMissingVerityDebugPackageWithVerityDebug(t *testing.T) {
 	// Skip this test if the package list DOES include it, but print an error
 	var pkgList installutils.PackageList
 	pkgListPath := filepath.Join(configDirectory, readOnlyPackageList)
-	err = jsonutils.ReadJSONFile(pkgListPath, &pkgList)
+	err = yamlutils.ReadYAMLFile(pkgListPath, &pkgList)
 	assert.NoError(t, err)
 	for _, pkg := range pkgList.Packages {
 		if pkg == "verity-read-only-root-debug-tools" {

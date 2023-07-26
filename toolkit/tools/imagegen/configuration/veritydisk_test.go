@@ -40,7 +40,7 @@ func TestShouldSucceedParsingDefaultReadOnlyVerityRoot_ReadOnlyVerityRoot(t *tes
 			TmpfsOverlaySize:             "20%",
 		}
 	)
-	err := marshalJSONString("{}", &checkedReadOnlyVerityRoot)
+	err := marshalYAMLString("{}", &checkedReadOnlyVerityRoot)
 	assert.NoError(t, err)
 
 	// We set non-standard default values
@@ -55,14 +55,14 @@ func TestShouldSucceedParsingDefaultReadOnlyVerityRoot_ReadOnlyVerityRoot(t *tes
 
 func TestShouldSucceedParsingValidReadOnlyVerityRoot_ReadOnlyVerityRoot(t *testing.T) {
 	var checkedReadOnlyVerityRoot ReadOnlyVerityRoot
-	err := remarshalJSON(validReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err := remarshalYAML(validReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.NoError(t, err)
 	assert.Equal(t, validReadOnlyVerityRoot, checkedReadOnlyVerityRoot)
 }
 
 func TestShouldSucceedParsingValidReadOnlyVerityRootWithOverlays_ReadOnlyVerityRoot(t *testing.T) {
 	var checkedReadOnlyVerityRoot ReadOnlyVerityRoot
-	err := remarshalJSON(validReadOnlyVerityRootWithOverlays, &checkedReadOnlyVerityRoot)
+	err := remarshalYAML(validReadOnlyVerityRootWithOverlays, &checkedReadOnlyVerityRoot)
 	assert.NoError(t, err)
 	assert.Equal(t, validReadOnlyVerityRootWithOverlays, checkedReadOnlyVerityRoot)
 }
@@ -77,7 +77,7 @@ func TestShouldFailParsingEmptyName_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "[Name] must not be blank", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: [Name] must not be blank", err.Error())
 
@@ -94,7 +94,7 @@ func TestShouldFailUnreasonableErrorCorrectionEncodingN_ReadOnlyVerityRoot(t *te
 	assert.Error(t, err)
 	assert.Equal(t, "verity FEC [ErrorCorrectionEncodingRoots] out of bounds ( 2 <= N <= 24), currently 25", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: verity FEC [ErrorCorrectionEncodingRoots] out of bounds ( 2 <= N <= 24), currently 25", err.Error())
 
@@ -105,7 +105,7 @@ func TestShouldFailUnreasonableErrorCorrectionEncodingN_ReadOnlyVerityRoot(t *te
 	assert.Error(t, err)
 	assert.Equal(t, "verity FEC [ErrorCorrectionEncodingRoots] out of bounds ( 2 <= N <= 24), currently 1", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: verity FEC [ErrorCorrectionEncodingRoots] out of bounds ( 2 <= N <= 24), currently 1", err.Error())
 }
@@ -121,7 +121,7 @@ func TestShouldFailInvalidErrorBehavior_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for VerityErrorBehavior (not_a_behavior)", err.Error())
 
-	err = remarshalJSON(invalidBehaviorVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidBehaviorVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to parse [VerityErrorBehavior]: invalid value for VerityErrorBehavior (not_a_behavior)", err.Error())
 }
@@ -135,7 +135,7 @@ func TestShouldFailInvalidOverlaySizes_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to validate [TmpfsOverlaySize] (abcd), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlaySize] (abcd), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
@@ -144,7 +144,7 @@ func TestShouldFailInvalidOverlaySizes_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to validate [TmpfsOverlaySize] (1234t), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlaySize] (1234t), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
@@ -153,7 +153,7 @@ func TestShouldFailInvalidOverlaySizes_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to validate [TmpfsOverlaySize] (k1234), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlaySize] (k1234), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
@@ -162,7 +162,7 @@ func TestShouldFailInvalidOverlaySizes_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to validate [TmpfsOverlaySize] (1234kmb), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlaySize] (1234kmb), must be of the form '1234, 1234<k,m,g>, 30%", err.Error())
 }
@@ -176,7 +176,7 @@ func TestShouldFailInvalidOverlaySizePercents_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to validate [TmpfsOverlaySize] (100%), invalid percentage (100), should be in the range 0 < percentage < 100", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlaySize] (100%), invalid percentage (100), should be in the range 0 < percentage < 100", err.Error())
 
@@ -185,7 +185,7 @@ func TestShouldFailInvalidOverlaySizePercents_ReadOnlyVerityRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "failed to validate [TmpfsOverlaySize] (0%), invalid percentage (0), should be in the range 0 < percentage < 100", err.Error())
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlaySize] (0%), invalid percentage (0), should be in the range 0 < percentage < 100", err.Error())
 }
@@ -195,13 +195,13 @@ func TestShouldFailNestedVerityOverlays_ReadOnlyVerityRoot(t *testing.T) {
 	invalidReadOnlyVerityRoot := validReadOnlyVerityRoot
 	invalidReadOnlyVerityRoot.TmpfsOverlays = []string{"/path", "/path/overlaps"}
 
-	err := remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err := remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlays], overlays may not overlap each other (/path)(/path/overlaps)", err.Error())
 
 	invalidReadOnlyVerityRoot.TmpfsOverlays = []string{"/path/overlaps", "/path"}
 
-	err = remarshalJSON(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
+	err = remarshalYAML(invalidReadOnlyVerityRoot, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlays], overlays may not overlap each other (/path)(/path/overlaps)", err.Error())
 }
@@ -209,7 +209,7 @@ func TestShouldFailNestedVerityOverlays_ReadOnlyVerityRoot(t *testing.T) {
 func TestShouldFailParsingInvalidReadOnlyVerityRootJSON_ReadOnlyVerityRoot(t *testing.T) {
 	var checkedReadOnlyVerityRoot ReadOnlyVerityRoot
 
-	err := marshalJSONString(invalidReadOnlyVerityRootJSON, &checkedReadOnlyVerityRoot)
+	err := marshalYAMLString(invalidReadOnlyVerityRootJSON, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: json: cannot unmarshal number into Go struct field IntermediateTypeReadOnlyVerityRoot.Enable of type bool", err.Error())
 }
@@ -217,7 +217,7 @@ func TestShouldFailParsingInvalidReadOnlyVerityRootJSON_ReadOnlyVerityRoot(t *te
 func TestShouldFailParsingInvalidReadOnlyVerityRootBehaviorJSON_ReadOnlyVerityRoot(t *testing.T) {
 	var checkedReadOnlyVerityRoot ReadOnlyVerityRoot
 
-	err := marshalJSONString(invalidReadONlyVerityBehaviorJSON, &checkedReadOnlyVerityRoot)
+	err := marshalYAMLString(invalidReadONlyVerityBehaviorJSON, &checkedReadOnlyVerityRoot)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ReadOnlyVerityRoot]: failed to parse [VerityErrorBehavior]: invalid value for VerityErrorBehavior (not_a_behavior)", err.Error())
 }

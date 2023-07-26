@@ -6,8 +6,9 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // SELinux sets the SELinux mode
@@ -49,11 +50,11 @@ func (s *SELinux) IsValid() (err error) {
 	return fmt.Errorf("invalid value for SELinux (%s)", s)
 }
 
-// UnmarshalJSON Unmarshals an SELinux entry
-func (s *SELinux) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals an SELinux entry
+func (s *SELinux) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeSELinux SELinux
-	err = json.Unmarshal(b, (*IntermediateTypeSELinux)(s))
+	err = value.Decode((*IntermediateTypeSELinux)(s))
 	if err != nil {
 		return fmt.Errorf("failed to parse [SELinux]: %w", err)
 	}

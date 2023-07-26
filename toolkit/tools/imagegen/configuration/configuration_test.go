@@ -4,13 +4,13 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
 	"testing"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"gopkg.in/yaml.v3"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -26,9 +26,9 @@ func TestMain(m *testing.M) {
 	os.Exit(testResult)
 }
 
-// remarshalJSON takes a struct, marshals it into a JSON format, then
+// remarshalYAML takes a struct, marshals it into a JSON format, then
 // unmarshals it back into a structure.
-func remarshalJSON(structIn interface{}, structOut interface{}) (err error) {
+func remarshalYAML(structIn interface{}, structOut interface{}) (err error) {
 	tIn := reflect.TypeOf(structIn)
 	tOut := reflect.TypeOf(structOut)
 	if tOut.Kind() != reflect.Ptr {
@@ -38,17 +38,17 @@ func remarshalJSON(structIn interface{}, structOut interface{}) (err error) {
 	if !tIn.ConvertibleTo(tOut.Elem()) {
 		return fmt.Errorf("can't remarshal JSON, types are incorrect (%v, %v). Should be (myStruct, *myStruct)", tIn, tOut)
 	}
-	jsonData, err := json.Marshal(structIn)
+	yamlData, err := yaml.Marshal(structIn)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(jsonData, structOut)
+	err = yaml.Unmarshal(yamlData, structOut)
 	return
 }
 
-// marshalJSONString coverts a JSON string into a struct
-func marshalJSONString(jsonString string, structOut interface{}) (err error) {
-	err = json.Unmarshal([]byte(jsonString), structOut)
+// marshalYAMLString coverts a JSON string into a struct
+func marshalYAMLString(yamlString string, structOut interface{}) (err error) {
+	err = yaml.Unmarshal([]byte(yamlString), structOut)
 	return
 }
 
@@ -89,7 +89,7 @@ func TestShouldFailForUntaggedEncryptionDeviceMapperRoot(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "a config in [SystemConfigs] enables a device mapper based root (Encryption or Read-Only), but partitions are miss-configured: [Partition] 'MyRootfs' must include 'dmroot' device mapper root flag in [Flags] for [SystemConfig] 'SmallerDisk's root partition since it uses [ReadOnlyVerityRoot] or [Encryption]", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: a config in [SystemConfigs] enables a device mapper based root (Encryption or Read-Only), but partitions are miss-configured: [Partition] 'MyRootfs' must include 'dmroot' device mapper root flag in [Flags] for [SystemConfig] 'SmallerDisk's root partition since it uses [ReadOnlyVerityRoot] or [Encryption]", err.Error())
 }
@@ -118,7 +118,7 @@ func TestShouldFailDeviceMapperWithNoRootPartitions(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "a config in [SystemConfigs] enables a device mapper based root (Encryption or Read-Only), but partitions are miss-configured: can't find a root ('/') [PartitionSetting] to work with either [ReadOnlyVerityRoot] or [Encryption]", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: failed to parse [SystemConfig]: invalid [ReadOnlyVerityRoot] or [Encryption]: must have a partition mounted at '/'", err.Error())
 
@@ -172,7 +172,7 @@ func TestShouldFailDeviceMapperWithMultipleRoots(t *testing.T) {
 	assert.Equal(t, "a config in [SystemConfigs] enables a device mapper based root (Encryption or Read-Only), but partitions are miss-configured: [SystemConfig] 'SmallerDisk' includes two (or more) device mapper root [PartitionSettings] 'MyRootfs' and 'MySecondRootfs', include only one", err.Error())
 
 	// remarshal runs IsValid() on [SystemConfig] prior to running it on [Config], so we get a different error message here.
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: a config in [SystemConfigs] enables a device mapper based root (Encryption or Read-Only), but partitions are miss-configured: [SystemConfig] 'SmallerDisk' includes two (or more) device mapper root [PartitionSettings] 'MyRootfs' and 'MySecondRootfs', include only one", err.Error())
 
@@ -193,7 +193,7 @@ func TestShouldFailDuplicatedIDs(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [Config]: a [Partition] on a [Disk] '0' shares an ID 'duplicatedID' with another partition (on disk '0')", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: invalid [Config]: a [Partition] on a [Disk] '0' shares an ID 'duplicatedID' with another partition (on disk '0')", err.Error())
 
@@ -208,7 +208,7 @@ func TestShouldFailDuplicatedIDs(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [Config]: a [Partition] on a [Disk] '0' shares an ID 'duplicatedID' with another partition (on disk '1')", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: invalid [Config]: a [Partition] on a [Disk] '0' shares an ID 'duplicatedID' with another partition (on disk '1')", err.Error())
 }
@@ -226,7 +226,7 @@ func TestShouldFailMissingPartition(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [Config]: [SystemConfig] 'SmallerDisk' mounts a [Partition] 'NOT_AN_ID' which has no corresponding partition on a [Disk]", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: invalid [Config]: [SystemConfig] 'SmallerDisk' mounts a [Partition] 'NOT_AN_ID' which has no corresponding partition on a [Disk]", err.Error())
 }
@@ -248,7 +248,7 @@ func TestShouldFailMissmatchedGPTMountsWithNonMBRDisk(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [Config]: [SystemConfig] 'SmallerDisk' mounts a [Partition] 'MyBoot' via PARTLABEL, but that partition is on an MBR disk which does not support PARTLABEL", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: invalid [Config]: [SystemConfig] 'SmallerDisk' mounts a [Partition] 'MyBoot' via PARTLABEL, but that partition is on an MBR disk which does not support PARTLABEL", err.Error())
 }
@@ -265,7 +265,7 @@ func TestShouldFailPartLabelWithNoName(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [Config]: [SystemConfig] 'SmallerDisk' mounts a [Partition] 'MyBoot' via PARTLABEL, but it has no [Name]", err.Error())
 
-	err = remarshalJSON(testConfig, &checkedConfig)
+	err = remarshalYAML(testConfig, &checkedConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Config]: invalid [Config]: [SystemConfig] 'SmallerDisk' mounts a [Partition] 'MyBoot' via PARTLABEL, but it has no [Name]", err.Error())
 }

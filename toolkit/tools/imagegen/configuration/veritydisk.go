@@ -6,11 +6,12 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"regexp"
 	"strconv"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ReadOnlyVerityRoot controls DM-Verity read-only filesystems which will be mounted at startup
@@ -42,16 +43,16 @@ import (
 // - TmpfsOverlayDebugEnabled: Make the tmpfs overlay mounts easily accessible for debugging
 //     purposes. They can be found in /mnt/verity_overlay_debug_tmpfs
 type ReadOnlyVerityRoot struct {
-	Enable                       bool                `json:"Enable"`
-	Name                         string              `json:"Name"`
-	ErrorCorrectionEnable        bool                `json:"ErrorCorrectionEnable"`
-	ErrorCorrectionEncodingRoots int                 `json:"ErrorCorrectionEncodingRoots"`
-	RootHashSignatureEnable      bool                `json:"RootHashSignatureEnable"`
-	ValidateOnBoot               bool                `json:"ValidateOnBoot"`
-	VerityErrorBehavior          VerityErrorBehavior `json:"VerityErrorBehavior"`
-	TmpfsOverlays                []string            `json:"TmpfsOverlays"`
-	TmpfsOverlaySize             string              `json:"TmpfsOverlaySize"`
-	TmpfsOverlayDebugEnabled     bool                `json:"TmpfsOverlayDebugEnabled"`
+	Enable                       bool                `json:"Enable" yaml:"Enable"`
+	Name                         string              `json:"Name" yaml:"Name"`
+	ErrorCorrectionEnable        bool                `json:"ErrorCorrectionEnable" yaml:"ErrorCorrectionEnable"`
+	ErrorCorrectionEncodingRoots int                 `json:"ErrorCorrectionEncodingRoots" yaml:"ErrorCorrectionEncodingRoots"`
+	RootHashSignatureEnable      bool                `json:"RootHashSignatureEnable" yaml:"RootHashSignatureEnable"`
+	ValidateOnBoot               bool                `json:"ValidateOnBoot" yaml:"ValidateOnBoot"`
+	VerityErrorBehavior          VerityErrorBehavior `json:"VerityErrorBehavior" yaml:"VerityErrorBehavior"`
+	TmpfsOverlays                []string            `json:"TmpfsOverlays" yaml:"TmpfsOverlays"`
+	TmpfsOverlaySize             string              `json:"TmpfsOverlaySize" yaml:"TmpfsOverlaySize"`
+	TmpfsOverlayDebugEnabled     bool                `json:"TmpfsOverlayDebugEnabled" yaml:"TmpfsOverlayDebugEnabled"`
 }
 
 const (
@@ -137,15 +138,15 @@ func (v *ReadOnlyVerityRoot) IsValid() (err error) {
 	return
 }
 
-// UnmarshalJSON Unmarshals a ReadOnlyVerityRoot entry
-func (v *ReadOnlyVerityRoot) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a ReadOnlyVerityRoot entry
+func (v *ReadOnlyVerityRoot) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeReadOnlyVerityRoot ReadOnlyVerityRoot
 
 	// Populate non-standard default values
 	*v = GetDefaultReadOnlyVerityRoot()
 
-	err = json.Unmarshal(b, (*IntermediateTypeReadOnlyVerityRoot)(v))
+	err = value.Decode((*IntermediateTypeReadOnlyVerityRoot)(v))
 	if err != nil {
 		return fmt.Errorf("failed to parse [ReadOnlyVerityRoot]: %w", err)
 	}

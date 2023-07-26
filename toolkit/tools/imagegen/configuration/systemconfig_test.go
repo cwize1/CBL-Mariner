@@ -18,7 +18,7 @@ var (
 
 func TestShouldFailParsingDefaultSystemConfig_SystemConfig(t *testing.T) {
 	var checkedSystemConfig SystemConfig
-	err := marshalJSONString("{}", &checkedSystemConfig)
+	err := marshalYAMLString("{}", &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: missing [Name] field", err.Error())
 }
@@ -27,7 +27,7 @@ func TestShouldSucceedParseValidSystemConfig_SystemConfig(t *testing.T) {
 	var checkedSystemConfig SystemConfig
 
 	assert.NoError(t, validSystemConfig.IsValid())
-	err := remarshalJSON(validSystemConfig, &checkedSystemConfig)
+	err := remarshalYAML(validSystemConfig, &checkedSystemConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, validSystemConfig, checkedSystemConfig)
 }
@@ -42,7 +42,7 @@ func TestShouldFailParsingMissingName_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "missing [Name] field", err.Error())
 
-	err = remarshalJSON(missingNameConfig, &checkedSystemConfig)
+	err = remarshalYAML(missingNameConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: missing [Name] field", err.Error())
 }
@@ -58,7 +58,7 @@ func TestShouldFailParsingMissingPackages_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "system configuration must provide at least one package list inside the [PackageLists] or one package in the [Packages] field", err.Error())
 
-	err = remarshalJSON(missingPackageListConfig, &checkedSystemConfig)
+	err = remarshalYAML(missingPackageListConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: system configuration must provide at least one package list inside the [PackageLists] or one package in the [Packages] field", err.Error())
 }
@@ -72,7 +72,7 @@ func TestShouldSucceedParsingMissingPackageLists_SystemConfig(t *testing.T) {
 
 	assert.NoError(t, missingPackageListConfig.IsValid())
 
-	err := remarshalJSON(missingPackageListConfig, &checkedSystemConfig)
+	err := remarshalYAML(missingPackageListConfig, &checkedSystemConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, missingPackageListConfig, checkedSystemConfig)
 }
@@ -86,7 +86,7 @@ func TestShouldSucceedParsingMissingInlinePackages_SystemConfig(t *testing.T) {
 
 	assert.NoError(t, missingPackagesConfig.IsValid())
 
-	err := remarshalJSON(missingPackagesConfig, &checkedSystemConfig)
+	err := remarshalYAML(missingPackagesConfig, &checkedSystemConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, missingPackagesConfig, checkedSystemConfig)
 }
@@ -101,7 +101,7 @@ func TestShouldFailParsingMissingDefaultKernel_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "system configuration must always provide default kernel inside the [KernelOptions] field; remember that kernels are FORBIDDEN from appearing in any of the [PackageLists] or [Packages]", err.Error())
 
-	err = remarshalJSON(missingDefaultConfig, &checkedSystemConfig)
+	err = remarshalYAML(missingDefaultConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: system configuration must always provide default kernel inside the [KernelOptions] field; remember that kernels are FORBIDDEN from appearing in any of the [PackageLists] or [Packages]", err.Error())
 }
@@ -117,7 +117,7 @@ func TestShouldFailParsingMissingExtraBlankKernel_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "empty kernel entry found in the [KernelOptions] field (extra); remember that kernels are FORBIDDEN from appearing in any of the [PackageLists] or [Packages]", err.Error())
 
-	err = remarshalJSON(blankKernelConfig, &checkedSystemConfig)
+	err = remarshalYAML(blankKernelConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: empty kernel entry found in the [KernelOptions] field (extra); remember that kernels are FORBIDDEN from appearing in any of the [PackageLists] or [Packages]", err.Error())
 }
@@ -132,7 +132,7 @@ func TestShouldSucceedParsingMissingDefaultKernelForRootfs_SystemConfig(t *testi
 	rootfsNoKernelConfig.Encryption = RootEncryption{}
 
 	assert.NoError(t, rootfsNoKernelConfig.IsValid())
-	err := remarshalJSON(rootfsNoKernelConfig, &checkedSystemConfig)
+	err := remarshalYAML(rootfsNoKernelConfig, &checkedSystemConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, rootfsNoKernelConfig, checkedSystemConfig)
 }
@@ -150,7 +150,7 @@ func TestShouldFailParsingInvalidKernelForRootfs_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "empty kernel entry found in the [KernelOptions] field (extra); remember that kernels are FORBIDDEN from appearing in any of the [PackageLists] or [Packages]", err.Error())
 
-	err = remarshalJSON(rootfsInvalidKernelConfig, &checkedSystemConfig)
+	err = remarshalYAML(rootfsInvalidKernelConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: empty kernel entry found in the [KernelOptions] field (extra); remember that kernels are FORBIDDEN from appearing in any of the [PackageLists] or [Packages]", err.Error())
 }
@@ -165,7 +165,7 @@ func TestShouldFailParsingBadKernelCommandLine_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [KernelCommandLine]: ExtraCommandLine contains character ` which is reserved for use by sed", err.Error())
 
-	err = remarshalJSON(badKernelCommandConfig, &checkedSystemConfig)
+	err = remarshalYAML(badKernelCommandConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: failed to parse [KernelCommandLine]: ExtraCommandLine contains character ` which is reserved for use by sed", err.Error())
 }
@@ -183,7 +183,7 @@ func TestShouldFailParsingBadUserUID_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [User]: invalid value for UID (-2), not within [0, 60000]", err.Error())
 
-	err = remarshalJSON(badUserConfig, &checkedSystemConfig)
+	err = remarshalYAML(badUserConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: failed to parse [User]: invalid value for UID (-2), not within [0, 60000]", err.Error())
 }
@@ -201,7 +201,7 @@ func TestShouldFailToParsingMultipleSameMounts_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [PartitionSettings]: duplicate mount point found at '/'", err.Error())
 
-	err = remarshalJSON(badPartitionSettingsConfig, &checkedSystemConfig)
+	err = remarshalYAML(badPartitionSettingsConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: invalid [PartitionSettings]: duplicate mount point found at '/'", err.Error())
 }
@@ -218,7 +218,7 @@ func TestShouldSucceedParsingMultipleSameEmptyMounts_SystemConfig(t *testing.T) 
 	err := emptyPartitionSettingsConfig.IsValid()
 	assert.NoError(t, err)
 
-	err = remarshalJSON(emptyPartitionSettingsConfig, &checkedSystemConfig)
+	err = remarshalYAML(emptyPartitionSettingsConfig, &checkedSystemConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, emptyPartitionSettingsConfig, checkedSystemConfig)
 }
@@ -234,7 +234,7 @@ func TestShouldFailParsingBothVerityAndEncryption_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [ReadOnlyVerityRoot] and [Encryption]: verity root currently does not support root encryption", err.Error())
 
-	err = remarshalJSON(badBothEncryptionVerityConfig, &checkedSystemConfig)
+	err = remarshalYAML(badBothEncryptionVerityConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: invalid [ReadOnlyVerityRoot] and [Encryption]: verity root currently does not support root encryption", err.Error())
 }
@@ -255,7 +255,7 @@ func TestShouldFailParsingInvalidVerityRoot_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlays], overlays may not overlap each other (/nested)(/nested/folder)", err.Error())
 
-	err = remarshalJSON(badPartitionSettingsConfig, &checkedSystemConfig)
+	err = remarshalYAML(badPartitionSettingsConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: failed to parse [ReadOnlyVerityRoot]: failed to validate [TmpfsOverlays], overlays may not overlap each other (/nested)(/nested/folder)", err.Error())
 }
@@ -275,7 +275,7 @@ func TestShouldFailParsingVerityRootWithNoRoot_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [ReadOnlyVerityRoot] or [Encryption]: must have a partition mounted at '/'", err.Error())
 
-	err = remarshalJSON(badPartitionSettingsConfig, &checkedSystemConfig)
+	err = remarshalYAML(badPartitionSettingsConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: invalid [ReadOnlyVerityRoot] or [Encryption]: must have a partition mounted at '/'", err.Error())
 }
@@ -296,7 +296,7 @@ func TestShouldFailParsingVerityRootWithNoBoot_SystemConfig(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [ReadOnlyVerityRoot]: must have a separate partition mounted at '/boot'", err.Error())
 
-	err = remarshalJSON(badPartitionSettingsConfig, &checkedSystemConfig)
+	err = remarshalYAML(badPartitionSettingsConfig, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: invalid [ReadOnlyVerityRoot]: must have a separate partition mounted at '/boot'", err.Error())
 }
@@ -323,7 +323,7 @@ func TestShouldSucceedFindingRootPartitionSetting_SystemConfig(t *testing.T) {
 func TestShouldFailToParseInvalidJSON_SystemConfig(t *testing.T) {
 	var checkedSystemConfig SystemConfig
 
-	err := marshalJSONString(invalidSystemConfigJSON, &checkedSystemConfig)
+	err := marshalYAMLString(invalidSystemConfigJSON, &checkedSystemConfig)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SystemConfig]: json: cannot unmarshal number into Go struct field IntermediateTypeSystemConfig.IsDefault of type bool", err.Error())
 

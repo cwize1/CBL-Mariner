@@ -6,34 +6,34 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"gopkg.in/yaml.v3"
 )
 
 // SystemConfig defines how each system present on the image is supposed to be configured.
 type SystemConfig struct {
-	IsDefault          bool               `json:"IsDefault"`
-	IsKickStartBoot    bool               `json:"IsKickStartBoot"`
-	BootType           string             `json:"BootType"`
-	Hostname           string             `json:"Hostname"`
-	Name               string             `json:"Name"`
-	PackageLists       []string           `json:"PackageLists"`
-	Packages           []string           `json:"Packages"`
-	KernelOptions      map[string]string  `json:"KernelOptions"`
-	KernelCommandLine  KernelCommandLine  `json:"KernelCommandLine"`
-	AdditionalFiles    map[string]string  `json:"AdditionalFiles"`
-	PartitionSettings  []PartitionSetting `json:"PartitionSettings"`
-	PreInstallScripts  []InstallScript    `json:"PreInstallScripts"`
-	PostInstallScripts []InstallScript    `json:"PostInstallScripts"`
-	Groups             []Group            `json:"Groups"`
-	Users              []User             `json:"Users"`
-	Encryption         RootEncryption     `json:"Encryption"`
-	RemoveRpmDb        bool               `json:"RemoveRpmDb"`
-	ReadOnlyVerityRoot ReadOnlyVerityRoot `json:"ReadOnlyVerityRoot"`
-	HidepidDisabled    bool               `json:"HidepidDisabled"`
+	IsDefault          bool               `json:"IsDefault" yaml:"IsDefault"`
+	IsKickStartBoot    bool               `json:"IsKickStartBoot" yaml:"IsKickStartBoot"`
+	BootType           string             `json:"BootType" yaml:"BootType"`
+	Hostname           string             `json:"Hostname" yaml:"Hostname"`
+	Name               string             `json:"Name" yaml:"Name"`
+	PackageLists       []string           `json:"PackageLists" yaml:"PackageLists"`
+	Packages           []string           `json:"Packages" yaml:"Packages"`
+	KernelOptions      map[string]string  `json:"KernelOptions" yaml:"KernelOptions"`
+	KernelCommandLine  KernelCommandLine  `json:"KernelCommandLine" yaml:"KernelCommandLine"`
+	AdditionalFiles    map[string]string  `json:"AdditionalFiles" yaml:"AdditionalFiles"`
+	PartitionSettings  []PartitionSetting `json:"PartitionSettings" yaml:"PartitionSettings"`
+	PreInstallScripts  []InstallScript    `json:"PreInstallScripts" yaml:"PreInstallScripts"`
+	PostInstallScripts []InstallScript    `json:"PostInstallScripts" yaml:"PostInstallScripts"`
+	Groups             []Group            `json:"Groups" yaml:"Groups"`
+	Users              []User             `json:"Users" yaml:"Users"`
+	Encryption         RootEncryption     `json:"Encryption" yaml:"Encryption"`
+	RemoveRpmDb        bool               `json:"RemoveRpmDb" yaml:"RemoveRpmDb"`
+	ReadOnlyVerityRoot ReadOnlyVerityRoot `json:"ReadOnlyVerityRoot" yaml:"ReadOnlyVerityRoot"`
+	HidepidDisabled    bool               `json:"HidepidDisabled" yaml:"HidepidDisabled"`
 }
 
 // GetRootPartitionSetting returns a pointer to the partition setting describing the disk which
@@ -154,11 +154,11 @@ func (s *SystemConfig) IsValid() (err error) {
 	return
 }
 
-// UnmarshalJSON Unmarshals a Disk entry
-func (s *SystemConfig) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a Disk entry
+func (s *SystemConfig) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeSystemConfig SystemConfig
-	err = json.Unmarshal(b, (*IntermediateTypeSystemConfig)(s))
+	err = value.Decode((*IntermediateTypeSystemConfig)(s))
 	if err != nil {
 		return fmt.Errorf("failed to parse [SystemConfig]: %w", err)
 	}

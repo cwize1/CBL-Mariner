@@ -45,7 +45,7 @@ func TestShouldSucceedParsingValidPartitionFlag_PartitionFlag(t *testing.T) {
 		var checkedPartitionFlag PartitionFlag
 
 		assert.NoError(t, validPartitionFlag.IsValid())
-		err := remarshalJSON(validPartitionFlag, &checkedPartitionFlag)
+		err := remarshalYAML(validPartitionFlag, &checkedPartitionFlag)
 		assert.NoError(t, err)
 		assert.Equal(t, validPartitionFlag, checkedPartitionFlag)
 	}
@@ -58,7 +58,7 @@ func TestShouldFailParsingInvalidPartitionFlag_PartitionFlag(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for Flag (not_a_partition_flag)", err.Error())
 
-	err = remarshalJSON(invalidPartitionFlag, &checkedPartitionFlag)
+	err = remarshalYAML(invalidPartitionFlag, &checkedPartitionFlag)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Flag]: invalid value for Flag (not_a_partition_flag)", err.Error())
 }
@@ -66,7 +66,7 @@ func TestShouldFailParsingInvalidPartitionFlag_PartitionFlag(t *testing.T) {
 func TestShouldSucceedParsingValidJSON_PartitionFlag(t *testing.T) {
 	var checkedPartitionFlag PartitionFlag
 
-	err := marshalJSONString(validPartitionFlagJSON, &checkedPartitionFlag)
+	err := marshalYAMLString(validPartitionFlagJSON, &checkedPartitionFlag)
 	assert.NoError(t, err)
 	assert.Equal(t, validPartitionFlags[0], checkedPartitionFlag)
 }
@@ -74,7 +74,7 @@ func TestShouldSucceedParsingValidJSON_PartitionFlag(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_PartitionFlag(t *testing.T) {
 	var checkedPartitionFlag PartitionFlag
 
-	err := marshalJSONString(invalidPartitionFlagJSON, &checkedPartitionFlag)
+	err := marshalYAMLString(invalidPartitionFlagJSON, &checkedPartitionFlag)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Flag]: json: cannot unmarshal number into Go value of type configuration.IntermediateTypePartitionFlag", err.Error())
 }

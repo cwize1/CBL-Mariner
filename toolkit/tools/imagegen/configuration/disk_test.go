@@ -67,7 +67,7 @@ func TestShouldSucceedParsingValidDisk_Disk(t *testing.T) {
 	var checkedDisk Disk
 
 	assert.NoError(t, validDisk.IsValid())
-	err := remarshalJSON(validDisk, &checkedDisk)
+	err := remarshalYAML(validDisk, &checkedDisk)
 	assert.NoError(t, err)
 	assert.Equal(t, validDisk, checkedDisk)
 }
@@ -83,7 +83,7 @@ func TestShouldFailParsingDiskWithBadPartition_Disk(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for Flag (not_a_partition_flag)", err.Error())
 
-	err = remarshalJSON(invalidDisk, &checkedDisk)
+	err = remarshalYAML(invalidDisk, &checkedDisk)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Disk]: failed to parse [Partition]: failed to parse [Flag]: invalid value for Flag (not_a_partition_flag)", err.Error())
 }
@@ -97,7 +97,7 @@ func TestShouldFailParsingInvalidDisk_Disk(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid [PartitionTableType]: invalid value for PartitionTableType (not_a_partition_type)", err.Error())
 
-	err = remarshalJSON(invalidDisk, &checkedDisk)
+	err = remarshalYAML(invalidDisk, &checkedDisk)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Disk]: failed to parse [PartitionTableType]: invalid value for PartitionTableType (not_a_partition_type)", err.Error())
 }
@@ -130,7 +130,7 @@ func TestShouldFailPartitionsOverlapping(t *testing.T) {
 	assert.Equal(t, "invalid [Disk]: a [Partition] with an end location 514 overlaps with a [Partition] with a start location 512", err.Error())
 
 	// remarshal runs IsValid() on [SystemConfig] prior to running it on [Config], so we get a different error message here.
-	err = remarshalJSON(invalidDisk, &checkedDisk)
+	err = remarshalYAML(invalidDisk, &checkedDisk)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Disk]: invalid [Disk]: a [Partition] with an end location 514 overlaps with a [Partition] with a start location 512", err.Error())
 }
@@ -146,7 +146,7 @@ func TestShouldFailMaxSizeInsufficient(t *testing.T) {
 	assert.Equal(t, "invalid [Disk]: the MaxSize of 512 is not large enough to accomodate defined partitions ending at 1024.", err.Error())
 
 	// remarshal runs IsValid() on [SystemConfig] prior to running it on [Config], so we get a different error message here.
-	err = remarshalJSON(invalidDisk, &checkedDisk)
+	err = remarshalYAML(invalidDisk, &checkedDisk)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Disk]: invalid [Disk]: the MaxSize of 512 is not large enough to accomodate defined partitions ending at 1024.", err.Error())
 }

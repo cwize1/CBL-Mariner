@@ -6,9 +6,10 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // KernelCommandLine holds extra command line parameters which can be
@@ -17,9 +18,9 @@ import (
 // - ExtraCommandLine: Arbitrary parameters which will be appended to the
 //   end of the kernel command line
 type KernelCommandLine struct {
-	ImaPolicy        []ImaPolicy `json:"ImaPolicy"`
-	SELinux          SELinux     `json:"SELinux"`
-	ExtraCommandLine string      `json:"ExtraCommandLine"`
+	ImaPolicy        []ImaPolicy `json:"ImaPolicy" yaml:"ImaPolicy"`
+	SELinux          SELinux     `json:"SELinux" yaml:"SELinux"`
+	ExtraCommandLine string      `json:"ExtraCommandLine" yaml:"ExtraCommandLine"`
 }
 
 // GetSedDelimeter returns the delimeter which should be used with sed
@@ -49,11 +50,11 @@ func (k *KernelCommandLine) IsValid() (err error) {
 	return
 }
 
-// UnmarshalJSON Unmarshals a KernelCommandLine entry
-func (k *KernelCommandLine) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a KernelCommandLine entry
+func (k *KernelCommandLine) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeKernelCommandLine KernelCommandLine
-	err = json.Unmarshal(b, (*IntermediateTypeKernelCommandLine)(k))
+	err = value.Decode((*IntermediateTypeKernelCommandLine)(k))
 	if err != nil {
 		return fmt.Errorf("failed to parse [KernelCommandLine]: %w", err)
 	}

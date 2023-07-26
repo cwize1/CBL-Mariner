@@ -6,19 +6,20 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // PartitionSetting holds the mounting information for each partition.
 type PartitionSetting struct {
-	RemoveDocs       bool            `json:"RemoveDocs"`
-	ID               string          `json:"ID"`
-	MountIdentifier  MountIdentifier `json:"MountIdentifier"`
-	MountOptions     string          `json:"MountOptions"`
-	MountPoint       string          `json:"MountPoint"`
-	OverlayBaseImage string          `json:"OverlayBaseImage"`
-	RdiffBaseImage   string          `json:"RdiffBaseImage"`
+	RemoveDocs       bool            `json:"RemoveDocs" yaml:"RemoveDocs"`
+	ID               string          `json:"ID" yaml:"ID"`
+	MountIdentifier  MountIdentifier `json:"MountIdentifier" yaml:"MountIdentifier"`
+	MountOptions     string          `json:"MountOptions" yaml:"MountOptions"`
+	MountPoint       string          `json:"MountPoint" yaml:"MountPoint"`
+	OverlayBaseImage string          `json:"OverlayBaseImage" yaml:"OverlayBaseImage"`
+	RdiffBaseImage   string          `json:"RdiffBaseImage" yaml:"RdiffBaseImage"`
 }
 
 var defaultPartitionSetting PartitionSetting = PartitionSetting{
@@ -36,15 +37,15 @@ func (p *PartitionSetting) IsValid() (err error) {
 	return nil
 }
 
-// UnmarshalJSON Unmarshals a PartitionSetting entry
-func (p *PartitionSetting) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML Unmarshals a PartitionSetting entry
+func (p *PartitionSetting) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypePartitionSetting PartitionSetting
 
 	// Populate non-standard default values
 	*p = GetDefaultPartitionSetting()
 
-	err = json.Unmarshal(b, (*IntermediateTypePartitionSetting)(p))
+	err = value.Decode((*IntermediateTypePartitionSetting)(p))
 	if err != nil {
 		return fmt.Errorf("failed to parse [PartitionSetting]: %w", err)
 	}

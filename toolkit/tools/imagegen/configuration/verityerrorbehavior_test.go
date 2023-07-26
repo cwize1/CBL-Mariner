@@ -43,7 +43,7 @@ func TestShouldSucceedParsingValidErrorBehaviors_VerityErrorBehavior(t *testing.
 		var checkedBehavior VerityErrorBehavior
 
 		assert.NoError(t, validErrorBehavior.IsValid())
-		err := remarshalJSON(validErrorBehavior, &checkedBehavior)
+		err := remarshalYAML(validErrorBehavior, &checkedBehavior)
 		assert.NoError(t, err)
 		assert.Equal(t, validErrorBehavior, checkedBehavior)
 	}
@@ -56,7 +56,7 @@ func TestShouldFailParsingInvalidErrorBehavior_VerityErrorBehavior(t *testing.T)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for VerityErrorBehavior (not_a_behavior)", err.Error())
 
-	err = remarshalJSON(invalidVerityErrorBehavior, &checkedBehavior)
+	err = remarshalYAML(invalidVerityErrorBehavior, &checkedBehavior)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [VerityErrorBehavior]: invalid value for VerityErrorBehavior (not_a_behavior)", err.Error())
 }
@@ -64,7 +64,7 @@ func TestShouldFailParsingInvalidErrorBehavior_VerityErrorBehavior(t *testing.T)
 func TestShouldSucceedParsingValidJSON_VerityErrorBehavior(t *testing.T) {
 	var checkedBehavior VerityErrorBehavior
 
-	err := marshalJSONString(validVerityErrorBehaviorJSON, &checkedBehavior)
+	err := marshalYAMLString(validVerityErrorBehaviorJSON, &checkedBehavior)
 	assert.NoError(t, err)
 	assert.Equal(t, validVerityErrorBehaviors[0], checkedBehavior)
 }
@@ -72,7 +72,7 @@ func TestShouldSucceedParsingValidJSON_VerityErrorBehavior(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_VerityErrorBehavior(t *testing.T) {
 	var checkedBehavior VerityErrorBehavior
 
-	err := marshalJSONString(invalidVerityErrorBehaviorJSON, &checkedBehavior)
+	err := marshalYAMLString(invalidVerityErrorBehaviorJSON, &checkedBehavior)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [VerityErrorBehavior]: json: cannot unmarshal number into Go value of type configuration.IntermediateTypeVerityErrorBehavior", err.Error())
 }

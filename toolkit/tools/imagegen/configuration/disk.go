@@ -6,23 +6,23 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"gopkg.in/yaml.v3"
 )
 
 // Disk holds the disk partitioning, formatting and size information.
 // It may also define artifacts generated for each disk.
 type Disk struct {
-	PartitionTableType PartitionTableType `json:"PartitionTableType"`
-	MaxSize            uint64             `json:"MaxSize"`
-	TargetDisk         TargetDisk         `json:"TargetDisk"`
-	Artifacts          []Artifact         `json:"Artifacts"`
-	Partitions         []Partition        `json:"Partitions"`
-	RawBinaries        []RawBinary        `json:"RawBinaries"`
+	PartitionTableType PartitionTableType `json:"PartitionTableType" yaml:"PartitionTableType"`
+	MaxSize            uint64             `json:"MaxSize" yaml:"MaxSize"`
+	TargetDisk         TargetDisk         `json:"TargetDisk" yaml:"TargetDisk"`
+	Artifacts          []Artifact         `json:"Artifacts" yaml:"Artifacts"`
+	Partitions         []Partition        `json:"Partitions" yaml:"Partitions"`
+	RawBinaries        []RawBinary        `json:"RawBinaries" yaml:"RawBinaries"`
 }
 
 // checkOverlappingPartitions checks that start and end positions of the defined partitions don't overlap.
@@ -116,11 +116,11 @@ func (d *Disk) IsValid() (err error) {
 	return
 }
 
-// UnmarshalJSON Unmarshals a Disk entry
-func (d *Disk) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a Disk entry
+func (d *Disk) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeDisk Disk
-	err = json.Unmarshal(b, (*IntermediateTypeDisk)(d))
+	err = value.Decode((*IntermediateTypeDisk)(d))
 	if err != nil {
 		return fmt.Errorf("failed to parse [Disk]: %w", err)
 	}

@@ -6,8 +6,9 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // ImaPolicy sets the ima_policy kernel command line option
@@ -49,11 +50,11 @@ func (i *ImaPolicy) IsValid() (err error) {
 	return fmt.Errorf("invalid value for ImaPolicy (%s)", i)
 }
 
-// UnmarshalJSON Unmarshals an ImaPolicy entry
-func (i *ImaPolicy) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals an ImaPolicy entry
+func (i *ImaPolicy) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeImaPolicy ImaPolicy
-	err = json.Unmarshal(b, (*IntermediateTypeImaPolicy)(i))
+	err = value.Decode((*IntermediateTypeImaPolicy)(i))
 	if err != nil {
 		return fmt.Errorf("failed to parse [ImaPolicy]: %w", err)
 	}

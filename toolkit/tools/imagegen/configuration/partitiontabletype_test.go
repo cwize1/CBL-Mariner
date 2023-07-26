@@ -47,7 +47,7 @@ func TestShouldSucceedParsingValidPartitionTableType_PartitionTableType(t *testi
 		var checkedPartitionType PartitionTableType
 
 		assert.NoError(t, validPartitionType.IsValid())
-		err := remarshalJSON(validPartitionType, &checkedPartitionType)
+		err := remarshalYAML(validPartitionType, &checkedPartitionType)
 		assert.NoError(t, err)
 		assert.Equal(t, validPartitionType, checkedPartitionType)
 	}
@@ -60,7 +60,7 @@ func TestShouldFailParsingInvalidPartitionTableType_PartitionTableType(t *testin
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for PartitionTableType (not_a_partition_type)", err.Error())
 
-	err = remarshalJSON(invalidPartitionTableType, &checkedPartitionType)
+	err = remarshalYAML(invalidPartitionTableType, &checkedPartitionType)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [PartitionTableType]: invalid value for PartitionTableType (not_a_partition_type)", err.Error())
 }
@@ -68,7 +68,7 @@ func TestShouldFailParsingInvalidPartitionTableType_PartitionTableType(t *testin
 func TestShouldSucceedParsingValidJSON_PartitionTableType(t *testing.T) {
 	var checkedPartitionType PartitionTableType
 
-	err := marshalJSONString(validPartitionTableTypeJSON, &checkedPartitionType)
+	err := marshalYAMLString(validPartitionTableTypeJSON, &checkedPartitionType)
 	assert.NoError(t, err)
 	assert.Equal(t, validPartitionTableTypes[0], checkedPartitionType)
 }
@@ -76,7 +76,7 @@ func TestShouldSucceedParsingValidJSON_PartitionTableType(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_PartitionTableType(t *testing.T) {
 	var checkedPartitionType PartitionTableType
 
-	err := marshalJSONString(invalidPartitionTableTypeJSON, &checkedPartitionType)
+	err := marshalYAMLString(invalidPartitionTableTypeJSON, &checkedPartitionType)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [PartitionTableType]: json: cannot unmarshal number into Go value of type configuration.IntermediateTypePartitionTableType", err.Error())
 }

@@ -6,8 +6,9 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // MountIdentifier indicates how a partition should be identified in the fstab file
@@ -59,15 +60,15 @@ func (m *MountIdentifier) IsValid() (err error) {
 	return fmt.Errorf("invalid value for Mount Identifier (%s)", m)
 }
 
-// UnmarshalJSON Unmarshals an MountIdentifier entry
-func (m *MountIdentifier) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML Unmarshals an MountIdentifier entry
+func (m *MountIdentifier) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeMountIdentifier MountIdentifier
 
 	// Populate non-standard default
 	*m = GetDefaultMountIdentifier()
 
-	err = json.Unmarshal(b, (*IntermediateTypeMountIdentifier)(m))
+	err = value.Decode((*IntermediateTypeMountIdentifier)(m))
 	if err != nil {
 		return fmt.Errorf("failed to parse [MountIdentifier]: %w", err)
 	}

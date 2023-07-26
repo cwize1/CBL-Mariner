@@ -43,7 +43,7 @@ func TestShouldSucceedParsingValidSELinux_SELinux(t *testing.T) {
 		var checkedSELinux SELinux
 
 		assert.NoError(t, validSelinux.IsValid())
-		err := remarshalJSON(validSelinux, &checkedSELinux)
+		err := remarshalYAML(validSelinux, &checkedSELinux)
 		assert.NoError(t, err)
 		assert.Equal(t, validSelinux, checkedSELinux)
 	}
@@ -56,7 +56,7 @@ func TestShouldFailParsingInvalidSELinux_SELinux(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for SELinux (bad_selinux)", err.Error())
 
-	err = remarshalJSON(invalidSELinux, &checkedSELinux)
+	err = remarshalYAML(invalidSELinux, &checkedSELinux)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SELinux]: invalid value for SELinux (bad_selinux)", err.Error())
 }
@@ -64,7 +64,7 @@ func TestShouldFailParsingInvalidSELinux_SELinux(t *testing.T) {
 func TestShouldSucceedParsingValidJSON_SELinux(t *testing.T) {
 	var checkedSELinux SELinux
 
-	err := marshalJSONString(validSELinuxJSON, &checkedSELinux)
+	err := marshalYAMLString(validSELinuxJSON, &checkedSELinux)
 	assert.NoError(t, err)
 	assert.Equal(t, validSELinuxOptions[0], checkedSELinux)
 }
@@ -72,7 +72,7 @@ func TestShouldSucceedParsingValidJSON_SELinux(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_SELinux(t *testing.T) {
 	var checkedSELinux SELinux
 
-	err := marshalJSONString(invalidSELinuxJSON, &checkedSELinux)
+	err := marshalYAMLString(invalidSELinuxJSON, &checkedSELinux)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [SELinux]: json: cannot unmarshal number into Go value of type configuration.IntermediateTypeSELinux", err.Error())
 }

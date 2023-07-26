@@ -6,10 +6,11 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"unicode"
 	"unicode/utf16"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Partition defines the size, name and file system type
@@ -21,13 +22,13 @@ import (
 // "Grow" tells the logical volume to fill up any available space (**Only used for
 // kickstart-style unattended installation**)
 type Partition struct {
-	FsType    string          `json:"FsType"`
-	ID        string          `json:"ID"`
-	Name      string          `json:"Name"`
-	End       uint64          `json:"End"`
-	Start     uint64          `json:"Start"`
-	Flags     []PartitionFlag `json:"Flags"`
-	Artifacts []Artifact      `json:"Artifacts"`
+	FsType    string          `json:"FsType" yaml:"FsType"`
+	ID        string          `json:"ID" yaml:"ID"`
+	Name      string          `json:"Name" yaml:"Name"`
+	End       uint64          `json:"End" yaml:"End"`
+	Start     uint64          `json:"Start" yaml:"Start"`
+	Flags     []PartitionFlag `json:"Flags" yaml:"Flags"`
+	Artifacts []Artifact      `json:"Artifacts" yaml:"Artifacts"`
 }
 
 // HasFlag returns true if a given partition has a specific flag set.
@@ -77,11 +78,11 @@ func (p *Partition) IsValid() (err error) {
 	return nil
 }
 
-// UnmarshalJSON Unmarshals a Partition entry
-func (p *Partition) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a Partition entry
+func (p *Partition) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypePartition Partition
-	err = json.Unmarshal(b, (*IntermediateTypePartition)(p))
+	err = value.Decode((*IntermediateTypePartition)(p))
 	if err != nil {
 		return fmt.Errorf("failed to parse [Partition]: %w", err)
 	}

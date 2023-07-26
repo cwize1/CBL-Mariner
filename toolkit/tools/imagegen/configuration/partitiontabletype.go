@@ -6,8 +6,9 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // PartitionTableType is either gpt, mbr, or none
@@ -62,11 +63,11 @@ func (p *PartitionTableType) ConvertToPartedArgument() (partedArgument string, e
 	return
 }
 
-// UnmarshalJSON Unmarshals a PartitionTableType entry
-func (p *PartitionTableType) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a PartitionTableType entry
+func (p *PartitionTableType) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypePartitionTableType PartitionTableType
-	err = json.Unmarshal(b, (*IntermediateTypePartitionTableType)(p))
+	err = value.Decode((*IntermediateTypePartitionTableType)(p))
 	if err != nil {
 		return fmt.Errorf("failed to parse [PartitionTableType]: %w", err)
 	}

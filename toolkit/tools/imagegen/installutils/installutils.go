@@ -18,7 +18,6 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/configuration"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/diskutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
-	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/jsonutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/pkgjson"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/randomization"
@@ -26,6 +25,7 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/tdnf"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/yamlutils"
 )
 
 const (
@@ -49,7 +49,7 @@ const (
 
 // PackageList represents the list of packages to install into an image
 type PackageList struct {
-	Packages []string `json:"packages"`
+	Packages []string `json:"packages" yaml:"packages"`
 }
 
 // GetRequiredPackagesForInstall returns the list of packages required for
@@ -301,7 +301,7 @@ func PackageNamesFromSingleSystemConfig(systemConfig configuration.SystemConfig)
 	for _, packageList := range systemConfig.PackageLists {
 		// Read json
 		logger.Log.Tracef("Processing packages from packagelist %v", packageList)
-		packages, err = getPackagesFromJSON(packageList)
+		packages, err = getPackagesFromFile(packageList)
 		if err != nil {
 			return
 		}
@@ -1611,10 +1611,10 @@ func sedInsert(line, replace, file string) (err error) {
 	return shell.ExecuteLive(squashErrors, "sed", "-i", insertAtLine, file)
 }
 
-func getPackagesFromJSON(file string) (pkgList PackageList, err error) {
-	err = jsonutils.ReadJSONFile(file, &pkgList)
+func getPackagesFromFile(file string) (pkgList PackageList, err error) {
+	err = yamlutils.ReadYAMLFile(file, &pkgList)
 	if err != nil {
-		logger.Log.Warnf("Could not read JSON file: %v", err)
+		logger.Log.Warnf("Could not read YAML file: %v", err)
 		return
 	}
 	return

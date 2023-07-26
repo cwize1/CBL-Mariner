@@ -6,8 +6,9 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // PartitionFlag describes the features of a partition
@@ -55,11 +56,11 @@ func (p *PartitionFlag) IsValid() (err error) {
 	return fmt.Errorf("invalid value for Flag (%s)", p)
 }
 
-// UnmarshalJSON Unmarshals an PartitionFlag entry
-func (p *PartitionFlag) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals an PartitionFlag entry
+func (p *PartitionFlag) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypePartitionFlag PartitionFlag
-	err = json.Unmarshal(b, (*IntermediateTypePartitionFlag)(p))
+	err = value.Decode((*IntermediateTypePartitionFlag)(p))
 	if err != nil {
 		return fmt.Errorf("failed to parse [Flag]: %w", err)
 	}

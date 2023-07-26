@@ -165,7 +165,7 @@
                         "groupa",
                         "groupb"
                     ],
-                    "SSHPubkeyPaths": [
+                    "SSHPubKeyPaths": [
                         "firstSSHKey.pub",
                         "secondSSHKey.pub"
                     ],

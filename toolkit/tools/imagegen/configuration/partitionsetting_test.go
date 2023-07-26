@@ -27,7 +27,7 @@ func TestShouldSucceedParsingDefaultPartitionSetting_PartitionSetting(t *testing
 			MountIdentifier: GetDefaultMountIdentifier(),
 		}
 	)
-	err := marshalJSONString("{}", &checkedPartitionSetting)
+	err := marshalYAMLString("{}", &checkedPartitionSetting)
 	assert.NoError(t, err)
 	assert.Equal(t, defaultPartitionSetting, checkedPartitionSetting)
 
@@ -37,7 +37,7 @@ func TestShouldSucceedParsingDefaultPartitionSetting_PartitionSetting(t *testing
 
 func TestShouldSucceedParsingValidPartitionSetting_PartitionSetting(t *testing.T) {
 	var checkedPartitionSetting PartitionSetting
-	err := remarshalJSON(validPartitionSetting, &checkedPartitionSetting)
+	err := remarshalYAML(validPartitionSetting, &checkedPartitionSetting)
 	assert.NoError(t, err)
 	assert.Equal(t, validPartitionSetting, checkedPartitionSetting)
 }
@@ -45,7 +45,7 @@ func TestShouldSucceedParsingValidPartitionSetting_PartitionSetting(t *testing.T
 func TestShouldFailParsingInvalidJSON_PartitionSetting(t *testing.T) {
 	var checkedPartitionSetting PartitionSetting
 
-	err := marshalJSONString(invalidvalidPartitionSettingJSON, &checkedPartitionSetting)
+	err := marshalYAMLString(invalidvalidPartitionSettingJSON, &checkedPartitionSetting)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [PartitionSetting]: json: cannot unmarshal number into Go struct field IntermediateTypePartitionSetting.RemoveDocs of type bool", err.Error())
 }

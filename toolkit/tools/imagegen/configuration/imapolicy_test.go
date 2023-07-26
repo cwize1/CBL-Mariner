@@ -43,7 +43,7 @@ func TestShouldSucceedParsingValidPolicies_ImaPolicy(t *testing.T) {
 		var checkedPolicy ImaPolicy
 
 		assert.NoError(t, validPolicy.IsValid())
-		err := remarshalJSON(validPolicy, &checkedPolicy)
+		err := remarshalYAML(validPolicy, &checkedPolicy)
 		assert.NoError(t, err)
 		assert.Equal(t, validPolicy, checkedPolicy)
 	}
@@ -56,7 +56,7 @@ func TestShouldFailParsingInvalidPolicy_ImaPolicy(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for ImaPolicy (not_a_policy)", err.Error())
 
-	err = remarshalJSON(invalidImaPolicy, &checkedPolicy)
+	err = remarshalYAML(invalidImaPolicy, &checkedPolicy)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ImaPolicy]: invalid value for ImaPolicy (not_a_policy)", err.Error())
 }
@@ -64,7 +64,7 @@ func TestShouldFailParsingInvalidPolicy_ImaPolicy(t *testing.T) {
 func TestShouldSucceedParsingValidJSON_ImaPolicy(t *testing.T) {
 	var checkedPolicy ImaPolicy
 
-	err := marshalJSONString(validImaJSON, &checkedPolicy)
+	err := marshalYAMLString(validImaJSON, &checkedPolicy)
 	assert.NoError(t, err)
 	assert.Equal(t, validImaPolicies[0], checkedPolicy)
 }
@@ -72,7 +72,7 @@ func TestShouldSucceedParsingValidJSON_ImaPolicy(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_ImaPolicy(t *testing.T) {
 	var checkedPolicy ImaPolicy
 
-	err := marshalJSONString(invalidImaJSON, &checkedPolicy)
+	err := marshalYAMLString(invalidImaJSON, &checkedPolicy)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [ImaPolicy]: json: cannot unmarshal number into Go value of type configuration.IntermediateTypeImaPolicy", err.Error())
 }

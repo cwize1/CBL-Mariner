@@ -6,8 +6,9 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 // VerityErrorBehavior sets the error behavior for the root FS verity disk
@@ -49,11 +50,11 @@ func (v *VerityErrorBehavior) IsValid() (err error) {
 	return fmt.Errorf("invalid value for VerityErrorBehavior (%s)", v)
 }
 
-// UnmarshalJSON Unmarshals an VerityErrorBehavior entry
-func (v *VerityErrorBehavior) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals an VerityErrorBehavior entry
+func (v *VerityErrorBehavior) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeVerityErrorBehavior VerityErrorBehavior
-	err = json.Unmarshal(b, (*IntermediateTypeVerityErrorBehavior)(v))
+	err = value.Decode((*IntermediateTypeVerityErrorBehavior)(v))
 	if err != nil {
 		return fmt.Errorf("failed to parse [VerityErrorBehavior]: %w", err)
 	}

@@ -6,29 +6,30 @@
 package configuration
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type User struct {
-	Name                string   `json:"Name"`
-	UID                 string   `json:"UID"`
-	PasswordHashed      bool     `json:"PasswordHashed"`
-	Password            string   `json:"Password"`
-	PasswordExpiresDays int64    `json:"PasswordExpiresDays"`
-	SSHPubKeyPaths      []string `json:"SSHPubKeyPaths"`
-	PrimaryGroup        string   `json:"PrimaryGroup"`
-	SecondaryGroups     []string `json:"SecondaryGroups"`
-	StartupCommand      string   `json:"StartupCommand"`
+	Name                string   `json:"Name" yaml:"Name"`
+	UID                 string   `json:"UID" yaml:"UID"`
+	PasswordHashed      bool     `json:"PasswordHashed" yaml:"PasswordHashed"`
+	Password            string   `json:"Password" yaml:"Password"`
+	PasswordExpiresDays int64    `json:"PasswordExpiresDays" yaml:"PasswordExpiresDays"`
+	SSHPubKeyPaths      []string `json:"SSHPubKeyPaths" yaml:"SSHPubKeyPaths"`
+	PrimaryGroup        string   `json:"PrimaryGroup" yaml:"PrimaryGroup"`
+	SecondaryGroups     []string `json:"SecondaryGroups" yaml:"SecondaryGroups"`
+	StartupCommand      string   `json:"StartupCommand" yaml:"StartupCommand"`
 }
 
-// UnmarshalJSON Unmarshals a User entry
-func (u *User) UnmarshalJSON(b []byte) (err error) {
+// UnmarshalYAML unmarshals a User entry
+func (u *User) UnmarshalYAML(value *yaml.Node) (err error) {
 	// Use an intermediate type which will use the default JSON unmarshal implementation
 	type IntermediateTypeUser User
-	err = json.Unmarshal(b, (*IntermediateTypeUser)(u))
+	err = value.Decode((*IntermediateTypeUser)(u))
 	if err != nil {
 		return fmt.Errorf("failed to parse [User]: %w", err)
 	}

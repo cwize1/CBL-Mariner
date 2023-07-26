@@ -43,7 +43,7 @@ func TestShouldSucceedParsingValidIdentifiers_MountIdentifier(t *testing.T) {
 		var checkedIdentifier MountIdentifier
 
 		assert.NoError(t, validIdentifier.IsValid())
-		err := remarshalJSON(validIdentifier, &checkedIdentifier)
+		err := remarshalYAML(validIdentifier, &checkedIdentifier)
 		assert.NoError(t, err)
 		assert.Equal(t, validIdentifier, checkedIdentifier)
 	}
@@ -56,7 +56,7 @@ func TestShouldFailParsingInvalidMountIdentifier_MountIdentifier(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for Mount Identifier (not_a_behavior)", err.Error())
 
-	err = remarshalJSON(invalidMountIdentifier, &checkedIdentifier)
+	err = remarshalYAML(invalidMountIdentifier, &checkedIdentifier)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [MountIdentifier]: invalid value for Mount Identifier (not_a_behavior)", err.Error())
 }
@@ -64,7 +64,7 @@ func TestShouldFailParsingInvalidMountIdentifier_MountIdentifier(t *testing.T) {
 func TestShouldSucceedParsingValidJSON_MountIdentifier(t *testing.T) {
 	var checkedIdentifier MountIdentifier
 
-	err := marshalJSONString(validMountIdentifierJSON, &checkedIdentifier)
+	err := marshalYAMLString(validMountIdentifierJSON, &checkedIdentifier)
 	assert.NoError(t, err)
 	assert.Equal(t, validMountIdentifiers[0], checkedIdentifier)
 }
@@ -72,7 +72,7 @@ func TestShouldSucceedParsingValidJSON_MountIdentifier(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_MountIdentifier(t *testing.T) {
 	var checkedIdentifier MountIdentifier
 
-	err := marshalJSONString(invalidMountIdentifierJSON, &checkedIdentifier)
+	err := marshalYAMLString(invalidMountIdentifierJSON, &checkedIdentifier)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [MountIdentifier]: json: cannot unmarshal number into Go value of type configuration.IntermediateTypeMountIdentifier", err.Error())
 }

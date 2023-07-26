@@ -25,14 +25,14 @@ var (
 
 func TestShouldSucceedParsingDefaultPartition_Partition(t *testing.T) {
 	var checkedPartition Partition
-	err := marshalJSONString("{}", &checkedPartition)
+	err := marshalYAMLString("{}", &checkedPartition)
 	assert.NoError(t, err)
 	assert.Equal(t, Partition{}, checkedPartition)
 }
 
 func TestShouldSucceedParsingValidPartition_Partition(t *testing.T) {
 	var checkedPartition Partition
-	err := remarshalJSON(validPartition, &checkedPartition)
+	err := remarshalYAML(validPartition, &checkedPartition)
 	assert.NoError(t, err)
 	assert.Equal(t, validPartition, checkedPartition)
 }
@@ -52,7 +52,7 @@ func TestShouldPassEmptyName_Partition(t *testing.T) {
 
 	emptyNamePartition.Name = ""
 
-	err := remarshalJSON(emptyNamePartition, &checkedPartition)
+	err := remarshalYAML(emptyNamePartition, &checkedPartition)
 	assert.NoError(t, err)
 }
 
@@ -62,7 +62,7 @@ func TestShouldPassMaxLengthName_Partition(t *testing.T) {
 
 	maxNamePartition.Name = "abcdefghijklmnopqrstuvwxyz012345678"
 
-	err := remarshalJSON(maxNamePartition, &checkedPartition)
+	err := remarshalYAML(maxNamePartition, &checkedPartition)
 	assert.NoError(t, err)
 }
 
@@ -76,7 +76,7 @@ func TestShouldFailLongNormalName_Partition(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "[Name] is too long, GPT header can hold only 72 bytes of UTF-16 (35 normal characters + null) while (abcdefghijklmnopqrstuvwxyz0123456789) needs 74 bytes", err.Error())
 
-	err = remarshalJSON(longNamePartition, &checkedPartition)
+	err = remarshalYAML(longNamePartition, &checkedPartition)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Partition]: [Name] is too long, GPT header can hold only 72 bytes of UTF-16 (35 normal characters + null) while (abcdefghijklmnopqrstuvwxyz0123456789) needs 74 bytes", err.Error())
 }
@@ -90,7 +90,7 @@ func TestShouldFailSymbolName_Partition(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "[Name] (( •_•)>⌐■~■) contains a non-ASCII character '•' at position (2)", err.Error())
 
-	err = remarshalJSON(symbolNamePartition, &checkedPartition)
+	err = remarshalYAML(symbolNamePartition, &checkedPartition)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Partition]: [Name] (( •_•)>⌐■~■) contains a non-ASCII character '•' at position (2)", err.Error())
 
@@ -106,7 +106,7 @@ func TestShouldFailParsingInvalidFlag_Partition(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "invalid value for Flag (not_a_flag)", err.Error())
 
-	err = remarshalJSON(invalidPartition, &checkedPartition)
+	err = remarshalYAML(invalidPartition, &checkedPartition)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Partition]: failed to parse [Flag]: invalid value for Flag (not_a_flag)", err.Error())
 }
@@ -114,7 +114,7 @@ func TestShouldFailParsingInvalidFlag_Partition(t *testing.T) {
 func TestShouldFailParsingInvalidJSON_Partition(t *testing.T) {
 	var checkedPartition Partition
 
-	err := marshalJSONString(invalidvalidPartitionJSON, &checkedPartition)
+	err := marshalYAMLString(invalidvalidPartitionJSON, &checkedPartition)
 	assert.Error(t, err)
 	assert.Equal(t, "failed to parse [Partition]: json: cannot unmarshal string into Go struct field IntermediateTypePartition.End of type uint64", err.Error())
 }
