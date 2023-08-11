@@ -4,17 +4,16 @@
 package imagecustomizerlib
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/configuration"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/diskutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
-	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +36,7 @@ func TestCustomizeImageEmptyConfig(t *testing.T) {
 	}
 
 	// Check output file type.
-	checkFileType(t, outImageFilePath, "Microsoft Disk Image")
+	checkFileType(t, outImageFilePath, "vhd")
 }
 
 func TestCustomizeImageCopyFiles(t *testing.T) {
@@ -60,7 +59,7 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	}
 
 	// Check output file type.
-	checkFileType(t, outImageFilePath, "DOS/MBR boot sector; partition 1 : ID=0xee")
+	checkFileType(t, outImageFilePath, "raw")
 
 	// Mount the output disk image so that its contents can be checked.
 	diskDevPath, err := diskutils.SetupLoopbackDevice(outImageFilePath)
@@ -146,9 +145,35 @@ func emptyDiskPartitions(diskDevPath string) ([]string, []*safechroot.MountPoint
 }
 
 func checkFileType(t *testing.T, filePath string, expectedFileType string) {
-	fileInfo, _, err := shell.Execute("file", "--brief", filePath)
+	fileType, err := getImageFileType(filePath)
 	assert.NoError(t, err)
-
-	fileType, _, _ := strings.Cut(fileInfo, ",")
 	assert.Equal(t, expectedFileType, fileType)
+}
+
+func getImageFileType(filePath string) (string, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	firstBytes := make([]byte, 512)
+	readByteCount, err := file.Read(firstBytes)
+	if err != nil {
+		return "", err
+	}
+
+	switch {
+	case readByteCount >= 8 && bytes.Equal(firstBytes[:8], []byte("conectix")):
+		return "vhd", nil
+
+	case readByteCount >= 8 && bytes.Equal(firstBytes[:8], []byte("vhdxfile")):
+		return "vhdx", nil
+
+	// Check for the MBR signature (which exists even on GPT formatted drives).
+	case readByteCount >= 512 && bytes.Equal(firstBytes[510:512], []byte{0x55, 0xAA}):
+		return "raw", nil
+	}
+
+	return "", fmt.Errorf("Unknown file type")
 }
