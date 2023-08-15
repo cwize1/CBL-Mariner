@@ -4,19 +4,42 @@
 package imagecustomizerlib
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
 )
 
 func doCustomizations(baseConfigPath string, config *imagecustomizerapi.SystemConfig, imageChroot *safechroot.Chroot) error {
 	var err error
 
+	err = updateHostname(config.Hostname, imageChroot)
+	if err != nil {
+		return err
+	}
+
 	err = copyAdditionalFiles(baseConfigPath, config.AdditionalFiles, imageChroot)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func updateHostname(hostname string, imageChroot *safechroot.Chroot) error {
+	var err error
+
+	if hostname == "" {
+		return nil
+	}
+
+	hostnameFilePath := filepath.Join(imageChroot.RootDir(), "etc/hostname")
+	err = file.Write(hostname, hostnameFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to write hostname file: %w", err)
 	}
 
 	return nil

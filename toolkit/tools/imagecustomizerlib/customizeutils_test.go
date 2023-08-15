@@ -14,14 +14,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCopyAdditionalFiles(t *testing.T) {
-	proposedDir := filepath.Join(tmpDir, "chroot", "TestCopyAdditionalFiles")
+func TestUpdateHostname(t *testing.T) {
+	// Setup environment.
+	proposedDir := filepath.Join(tmpDir, "TestUpdateHostname")
 	chroot := safechroot.NewChroot(proposedDir, false)
-	baseConfigPath := testDir
-
 	err := chroot.Initialize("", []string{}, []*safechroot.MountPoint{})
 	assert.NoError(t, err)
 	defer chroot.Close(false)
+
+	err = os.MkdirAll(filepath.Join(chroot.RootDir(), "etc"), os.ModePerm)
+	assert.NoError(t, err)
+
+	// Set hostname.
+	expectedHostname := "testhostname"
+	err = updateHostname(expectedHostname, chroot)
+	assert.NoError(t, err)
+
+	// Ensure hostname was correctly set.
+	actualHostname, err := os.ReadFile(filepath.Join(chroot.RootDir(), "etc/hostname"))
+	assert.NoError(t, err)
+	assert.Equal(t, expectedHostname, string(actualHostname))
+}
+
+func TestCopyAdditionalFiles(t *testing.T) {
+	proposedDir := filepath.Join(tmpDir, "TestCopyAdditionalFiles")
+	chroot := safechroot.NewChroot(proposedDir, false)
+	err := chroot.Initialize("", []string{}, []*safechroot.MountPoint{})
+	assert.NoError(t, err)
+	defer chroot.Close(false)
+
+	baseConfigPath := testDir
 
 	copy_2_filemode := os.FileMode(0o777)
 
