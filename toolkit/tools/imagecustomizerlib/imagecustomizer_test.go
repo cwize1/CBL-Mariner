@@ -24,7 +24,7 @@ func TestCustomizeImageEmptyConfig(t *testing.T) {
 	outImageFilePath := filepath.Join(buildDir, "image.vhd")
 
 	// Create empty disk.
-	diskFilePath, err := createEmptyDisk(buildDir)
+	diskFilePath, _, _, err := createFakeEfiImage(buildDir)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -47,7 +47,7 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	outImageFilePath := filepath.Join(buildDir, "image.qcow2")
 
 	// Create empty disk.
-	diskFilePath, err := createEmptyDisk(buildDir)
+	diskFilePath, newMountDirectories, mountPoints, err := createFakeEfiImage(buildDir)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -68,8 +68,6 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	}
 	defer diskutils.DetachLoopbackDevice(diskDevPath)
 
-	newMountDirectories, mountPoints := emptyDiskPartitions(diskDevPath)
-
 	imageChroot := safechroot.NewChroot(filepath.Join(buildDir, "imageroot"), false)
 	err = imageChroot.Initialize("", newMountDirectories, mountPoints)
 	if !assert.NoError(t, err) {
@@ -83,12 +81,12 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	assert.Equal(t, "abcdefg\n", string(file_contents))
 }
 
-func createEmptyDisk(buildDir string) (string, error) {
+func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountPoint, error) {
 	var err error
 
 	err = os.MkdirAll(buildDir, os.ModePerm)
 	if err != nil {
-		return "", fmt.Errorf("failed to make build directory (%s): %w", buildDir, err)
+		return "", nil, nil, fmt.Errorf("failed to make build directory (%s): %w", buildDir, err)
 	}
 
 	// Use a prototypical Mariner image partition config.
@@ -115,13 +113,13 @@ func createEmptyDisk(buildDir string) (string, error) {
 	// Create raw disk image file.
 	rawDisk, err := diskutils.CreateEmptyDisk(buildDir, "disk.raw", diskConfig)
 	if err != nil {
-		return "", fmt.Errorf("failed to create empty disk file in (%s): %w", buildDir, err)
+		return "", nil, nil, fmt.Errorf("failed to create empty disk file in (%s): %w", buildDir, err)
 	}
 
-	// Mount raw disk image file.
+	// Connect raw disk image file.
 	diskDevPath, err := diskutils.SetupLoopbackDevice(rawDisk)
 	if err != nil {
-		return "", fmt.Errorf("failed to mount raw disk (%s) as a loopback device: %w", rawDisk, err)
+		return "", nil, nil, fmt.Errorf("failed to mount raw disk (%s) as a loopback device: %w", rawDisk, err)
 	}
 	defer diskutils.DetachLoopbackDevice(diskDevPath)
 
@@ -129,19 +127,58 @@ func createEmptyDisk(buildDir string) (string, error) {
 	_, _, _, _, err = diskutils.CreatePartitions(diskDevPath, diskConfig,
 		configuration.RootEncryption{}, configuration.ReadOnlyVerityRoot{})
 	if err != nil {
-		return "", fmt.Errorf("failed to create partitions on disk (%s): %w", diskDevPath, err)
+		return "", nil, nil, fmt.Errorf("failed to create partitions on disk (%s): %w", diskDevPath, err)
 	}
 
-	return rawDisk, nil
-}
-
-func emptyDiskPartitions(diskDevPath string) ([]string, []*safechroot.MountPoint) {
+	// Create partition mount config.
 	newMountDirectories := []string{}
 	mountPoints := []*safechroot.MountPoint{
 		safechroot.NewPreDefaultsMountPoint(fmt.Sprintf("%sp2", diskDevPath), "/", "ext4", 0, ""),
 		safechroot.NewMountPoint(fmt.Sprintf("%sp1", diskDevPath), "/boot", "vfat", 0, ""),
 	}
-	return newMountDirectories, mountPoints
+
+	// Mount the partitions.
+	imageChroot := safechroot.NewChroot(filepath.Join(buildDir, "imageroot"), false)
+	err = imageChroot.Initialize("", newMountDirectories, mountPoints)
+	if err != nil {
+		return "", nil, nil, err
+	}
+	defer imageChroot.Close(false)
+
+	// Get the UUID of the OS partition.
+	diskPartitions, err := diskutils.GetDiskPartitions(diskDevPath)
+	if err != nil {
+		return "", nil, nil, err
+	}
+
+	var osPartition *diskutils.PartitionInfo
+	for _, diskPartition := range diskPartitions {
+		if diskPartition.Mountpoint == imageChroot.RootDir() {
+			osPartition = &diskPartition
+			break
+		}
+	}
+
+	if osPartition == nil {
+		return "", nil, nil, fmt.Errorf("os partition not found (%s)", diskDevPath)
+	}
+
+	// Write a fake grub.cfg file so that the partition discovery logic works.
+	grubConfigDirectory := filepath.Join(imageChroot.RootDir(), "/boot/boot/grub2")
+
+	err = os.MkdirAll(grubConfigDirectory, os.ModePerm)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to create grub.cfg directory: %w", err)
+	}
+
+	grubConfig := fmt.Sprintf("search -n -u %s -s\n", osPartition.Uuid)
+
+	err = os.WriteFile(filepath.Join(grubConfigDirectory, "grub.cfg"), []byte(grubConfig), os.ModePerm)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to write fake grub.cfg file: %w", err)
+	}
+
+	return rawDisk, newMountDirectories, mountPoints, nil
 }
 
 func checkFileType(t *testing.T, filePath string, expectedFileType string) {
@@ -175,5 +212,5 @@ func getImageFileType(filePath string) (string, error) {
 		return "raw", nil
 	}
 
-	return "", fmt.Errorf("Unknown file type")
+	return "", fmt.Errorf("unknown file type: %s", filePath)
 }
