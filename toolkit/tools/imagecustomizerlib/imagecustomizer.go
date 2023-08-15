@@ -183,7 +183,7 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 	// TODO: Read /etc/fstab file to find secondary partitions.
 	mountPoints := []*safechroot.MountPoint{
 		safechroot.NewPreDefaultsMountPoint(rootfsPartition.Path, "/", rootfsPartition.FileSystemType, 0, ""),
-		safechroot.NewMountPoint(efiSystemPartition.Path, "/boot", efiSystemPartition.FileSystemType, 0, ""),
+		safechroot.NewMountPoint(efiSystemPartition.Path, "/boot/efi", efiSystemPartition.FileSystemType, 0, ""),
 	}
 
 	return nil, mountPoints, nil

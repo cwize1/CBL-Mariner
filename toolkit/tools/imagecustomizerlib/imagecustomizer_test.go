@@ -134,7 +134,7 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 	newMountDirectories := []string{}
 	mountPoints := []*safechroot.MountPoint{
 		safechroot.NewPreDefaultsMountPoint(fmt.Sprintf("%sp2", diskDevPath), "/", "ext4", 0, ""),
-		safechroot.NewMountPoint(fmt.Sprintf("%sp1", diskDevPath), "/boot", "vfat", 0, ""),
+		safechroot.NewMountPoint(fmt.Sprintf("%sp1", diskDevPath), "/boot/efi", "vfat", 0, ""),
 	}
 
 	// Mount the partitions.
@@ -164,7 +164,7 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 	}
 
 	// Write a fake grub.cfg file so that the partition discovery logic works.
-	grubConfigDirectory := filepath.Join(imageChroot.RootDir(), "/boot/boot/grub2")
+	grubConfigDirectory := filepath.Join(imageChroot.RootDir(), "/boot/efi/boot/grub2")
 
 	err = os.MkdirAll(grubConfigDirectory, os.ModePerm)
 	if err != nil {
