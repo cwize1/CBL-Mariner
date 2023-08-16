@@ -13,6 +13,7 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/configuration"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/diskutils"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/installutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
 	"github.com/stretchr/testify/assert"
 )
@@ -131,10 +132,13 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 	}
 
 	// Create partition mount config.
+	bootPartitionDevPath := fmt.Sprintf("%sp1", diskDevPath)
+	osPartitionDevPath := fmt.Sprintf("%sp2", diskDevPath)
+
 	newMountDirectories := []string{}
 	mountPoints := []*safechroot.MountPoint{
-		safechroot.NewPreDefaultsMountPoint(fmt.Sprintf("%sp2", diskDevPath), "/", "ext4", 0, ""),
-		safechroot.NewMountPoint(fmt.Sprintf("%sp1", diskDevPath), "/boot/efi", "vfat", 0, ""),
+		safechroot.NewPreDefaultsMountPoint(osPartitionDevPath, "/", "ext4", 0, ""),
+		safechroot.NewMountPoint(bootPartitionDevPath, "/boot/efi", "vfat", 0, ""),
 	}
 
 	// Mount the partitions.
@@ -145,37 +149,33 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 	}
 	defer imageChroot.Close(false)
 
-	// Get the UUID of the OS partition.
-	diskPartitions, err := diskutils.GetDiskPartitions(diskDevPath)
-	if err != nil {
-		return "", nil, nil, err
-	}
-
-	var osPartition *diskutils.PartitionInfo
-	for _, diskPartition := range diskPartitions {
-		if diskPartition.Mountpoint == imageChroot.RootDir() {
-			osPartition = &diskPartition
-			break
-		}
-	}
-
-	if osPartition == nil {
-		return "", nil, nil, fmt.Errorf("os partition not found (%s)", diskDevPath)
-	}
-
 	// Write a fake grub.cfg file so that the partition discovery logic works.
-	grubConfigDirectory := filepath.Join(imageChroot.RootDir(), "/boot/efi/boot/grub2")
+	bootPrefix := "/boot"
 
-	err = os.MkdirAll(grubConfigDirectory, os.ModePerm)
+	osUuid, err := installutils.GetUUID(osPartitionDevPath)
 	if err != nil {
-		return "", nil, nil, fmt.Errorf("failed to create grub.cfg directory: %w", err)
+		return "", nil, nil, fmt.Errorf("failed get OS partition UUID: %w", err)
 	}
 
-	grubConfig := fmt.Sprintf("search -n -u %s -s\n", osPartition.Uuid)
-
-	err = os.WriteFile(filepath.Join(grubConfigDirectory, "grub.cfg"), []byte(grubConfig), os.ModePerm)
+	rootDevice, err := installutils.FormatMountIdentifier(configuration.MountIdentifierUuid, osPartitionDevPath)
 	if err != nil {
-		return "", nil, nil, fmt.Errorf("failed to write fake grub.cfg file: %w", err)
+		return "", nil, nil, fmt.Errorf("failed to format mount identifier: %w", err)
+	}
+
+	err = installutils.InstallBootloader(imageChroot, false, "efi", osUuid, bootPrefix, "", assetsDir)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to install bootloader: %w", err)
+	}
+
+	err = installutils.InstallGrubCfg(imageChroot.RootDir(), rootDevice, osUuid, bootPrefix, assetsDir,
+		diskutils.EncryptedRootDevice{}, configuration.KernelCommandLine{}, diskutils.VerityDevice{})
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to install main grub config file: %w", err)
+	}
+
+	err = installutils.InstallGrubEnv(imageChroot.RootDir(), assetsDir)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to install grubenv file: %w", err)
 	}
 
 	return rawDisk, newMountDirectories, mountPoints, nil
