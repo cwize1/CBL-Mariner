@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
@@ -24,7 +25,7 @@ func TestCustomizeImageEmptyConfig(t *testing.T) {
 	buildDir := filepath.Join(tmpDir, "TestCustomizeImageEmptyConfig")
 	outImageFilePath := filepath.Join(buildDir, "image.vhd")
 
-	// Create empty disk.
+	// Create fake disk.
 	diskFilePath, _, _, err := createFakeEfiImage(buildDir)
 	if !assert.NoError(t, err) {
 		return
@@ -47,7 +48,7 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	configFile := filepath.Join(testDir, "addfiles-config.yaml")
 	outImageFilePath := filepath.Join(buildDir, "image.qcow2")
 
-	// Create empty disk.
+	// Create fake disk.
 	diskFilePath, newMountDirectories, mountPoints, err := createFakeEfiImage(buildDir)
 	if !assert.NoError(t, err) {
 		return
@@ -80,6 +81,62 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	file_contents, err := os.ReadFile(filepath.Join(imageChroot.RootDir(), "a.txt"))
 	assert.NoError(t, err)
 	assert.Equal(t, "abcdefg\n", string(file_contents))
+}
+
+func TestCustomizeImageKernelCommandLine(t *testing.T) {
+	var err error
+
+	buildDir := filepath.Join(tmpDir, "TestCustomizeImageKernelCommandLine")
+	outImageFilePath := filepath.Join(buildDir, "image.vhd")
+
+	// Create fake disk.
+	diskFilePath, newMountDirectories, mountPoints, err := createFakeEfiImage(buildDir)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	// Customize image.
+	systemConfig := &imagecustomizerapi.SystemConfig{
+		KernelCommandLine: imagecustomizerapi.KernelCommandLine{
+			ExtraCommandLine: "console=tty0 console=ttyS0",
+		},
+	}
+
+	err = CustomizeImage(buildDir, buildDir, systemConfig, diskFilePath, outImageFilePath, "raw")
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	// Mount the output disk image so that its contents can be checked.
+	diskDevPath, err := diskutils.SetupLoopbackDevice(outImageFilePath)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer diskutils.DetachLoopbackDevice(diskDevPath)
+
+	imageChroot := safechroot.NewChroot(filepath.Join(buildDir, "imageroot"), false)
+	err = imageChroot.Initialize("", newMountDirectories, mountPoints)
+	if !assert.NoError(t, err) {
+		return
+	}
+	defer imageChroot.Close(false)
+
+	// Read the grub.cfg file.
+	grub2ConfigFilePath := filepath.Join(imageChroot.RootDir(), "/boot/grub2/grub.cfg")
+
+	grub2ConfigFile, err := os.ReadFile(grub2ConfigFilePath)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	t.Logf("%s", grub2ConfigFile)
+
+	linuxCommandLineRegex, err := regexp.Compile(`linux .* console=tty0 console=ttyS0 `)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.True(t, linuxCommandLineRegex.Match(grub2ConfigFile))
 }
 
 func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountPoint, error) {

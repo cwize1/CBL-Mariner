@@ -96,7 +96,8 @@ func handleKernelCommandLine(extraCommandLine string, imageChroot *safechroot.Ch
 		return fmt.Errorf("failed to find Linux kernel command line params in grub2 config file")
 	}
 
-	insertIndex := match[1]
+	// Note: regexp returns index pairs. So, [2] is the start index of the 1st group.
+	insertIndex := match[2]
 
 	// Insert new command line arguments.
 	newGrub2ConfigFile := grub2ConfigFile[:insertIndex] + extraCommandLine + " " + grub2ConfigFile[insertIndex:]
