@@ -19,7 +19,7 @@ var (
 	linuxCommandLineRegex = regexp.MustCompile(`\tlinux .* (\$kernelopts)`)
 )
 
-func doCustomizations(baseConfigPath string, config *imagecustomizerapi.SystemConfig, imageChroot *safechroot.Chroot) error {
+func doCustomizations(baseConfigPath string, config *imagecustomizerapi.SystemConfig, imageChroot *safechroot.Chroot, rpmsSources *[]string) error {
 	var err error
 
 	err = updateHostname(config.Hostname, imageChroot)
@@ -38,6 +38,19 @@ func doCustomizations(baseConfigPath string, config *imagecustomizerapi.SystemCo
 	}
 
 	return nil
+}
+
+func updatePackages(baseConfigPath string, packageLists []string, packages []string, imageChroot *safechroot.Chroot, rpmsSources *[]string) error {
+	var err error
+
+	for packageListFilePath := range packageLists {
+
+	}
+}
+
+func updatePackagesHelper(packages []string, imageChroot *safechroot.Chroot, rpmsSources *[]string) error {
+	var err error
+
 }
 
 func updateHostname(hostname string, imageChroot *safechroot.Chroot) error {

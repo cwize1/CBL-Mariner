@@ -13,6 +13,8 @@ import (
 // SystemConfig defines how each system present on the image is supposed to be configured.
 type SystemConfig struct {
 	Hostname          string                    `yaml:"Hostname"`
+	PackageLists      []string                  `yaml:"PackageLists"`
+	Packages          []string                  `yaml:"Packages"`
 	KernelCommandLine KernelCommandLine         `yaml:"KernelCommandLine"`
 	AdditionalFiles   map[string]FileConfigList `yaml:"AdditionalFiles"`
 }

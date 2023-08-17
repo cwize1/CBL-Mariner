@@ -21,7 +21,7 @@ var (
 )
 
 func CustomizeImageWithConfigFile(buildDir string, configFile string, imageFile string,
-	outputImageFile string, outputImageFormat string,
+	rpmsSources *[]string, outputImageFile string, outputImageFormat string,
 ) error {
 	var err error
 
@@ -33,7 +33,7 @@ func CustomizeImageWithConfigFile(buildDir string, configFile string, imageFile 
 
 	baseConfigPath, _ := filepath.Split(configFile)
 
-	err = CustomizeImage(buildDir, baseConfigPath, &config, imageFile, outputImageFile, outputImageFormat)
+	err = CustomizeImage(buildDir, baseConfigPath, &config, imageFile, rpmsSources, outputImageFile, outputImageFormat)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func CustomizeImageWithConfigFile(buildDir string, configFile string, imageFile 
 }
 
 func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomizerapi.SystemConfig, imageFile string,
-	outputImageFile string, outputImageFormat string,
+	rpmsSources *[]string, outputImageFile string, outputImageFormat string,
 ) error {
 	var err error
 
@@ -60,7 +60,7 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 	}
 
 	// Customize the raw image file.
-	err = customizeImageHelper(buildDir, baseConfigPath, config, buildImageFile)
+	err = customizeImageHelper(buildDir, baseConfigPath, config, buildImageFile, rpmsSources)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func toQemuImageFormat(imageFormat string) string {
 }
 
 func customizeImageHelper(buildDir string, baseConfigPath string, config *imagecustomizerapi.SystemConfig,
-	buildImageFile string,
+	buildImageFile string, rpmsSources *[]string,
 ) error {
 	// Mount the raw disk image file.
 	diskDevPath, err := diskutils.SetupLoopbackDevice(buildImageFile)
@@ -114,7 +114,7 @@ func customizeImageHelper(buildDir string, baseConfigPath string, config *imagec
 	defer imageChroot.Close(false)
 
 	// Do the actual customizations.
-	err = doCustomizations(baseConfigPath, config, imageChroot)
+	err = doCustomizations(baseConfigPath, config, imageChroot, rpmsSources)
 	if err != nil {
 		return err
 	}
