@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 
@@ -43,9 +44,26 @@ func doCustomizations(baseConfigPath string, config *imagecustomizerapi.SystemCo
 func updatePackages(baseConfigPath string, packageLists []string, packages []string, imageChroot *safechroot.Chroot, rpmsSources *[]string) error {
 	var err error
 
-	for packageListFilePath := range packageLists {
+	var allPackages []string
+	for _, packageListRelativePath := range packageLists {
+		packageListFilePath := path.Join(baseConfigPath, packageListRelativePath)
 
+		var packageList imagecustomizerapi.PackageList
+		err = imagecustomizerapi.UnmarshalYamlFile(packageListFilePath, &packageList)
+		if err != nil {
+			return fmt.Errorf("failed to read package list file (%s): %w", packageListFilePath, err)
+		}
+
+		allPackages = append(allPackages, packageList.Packages...)
 	}
+
+	allPackages = append(allPackages, packages...)
+	err = updatePackagesHelper(allPackages, imageChroot, rpmsSources)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func updatePackagesHelper(packages []string, imageChroot *safechroot.Chroot, rpmsSources *[]string) error {

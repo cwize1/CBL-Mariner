@@ -12,8 +12,8 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/diskutils"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safemount.go"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -146,22 +146,23 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 	// Mount the boot partition.
 	bootDir := filepath.Join(buildDir, "bootpartition")
 
-	err = os.MkdirAll(bootDir, os.ModePerm)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create directory for EFI system partition: %w", err)
-	}
-
-	err = unix.Mount(efiSystemPartition.Path, bootDir, efiSystemPartition.FileSystemType, 0, "")
+	efiSystemPartitionMount, err := safemount.NewMount(efiSystemPartition.Path, bootDir, efiSystemPartition.FileSystemType, 0, "")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to mount EFI system partition: %w", err)
 	}
-	defer unix.Unmount(bootDir, 0)
+	defer efiSystemPartitionMount.Close()
 
 	// Read the grub.cfg file.
 	grubConfigFilePath := filepath.Join(bootDir, "boot/grub2/grub.cfg")
 	grubConfigFile, err := os.ReadFile(grubConfigFilePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read grub.cfg file: %w", err)
+	}
+
+	// Close the boot partition mount.
+	err = efiSystemPartitionMount.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to close EFI system partition mount: %w", err)
 	}
 
 	// Look for the rootfs declaration line in the grub.cfg file.
