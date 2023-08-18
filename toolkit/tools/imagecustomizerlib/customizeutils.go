@@ -187,13 +187,11 @@ func updatePackagesHelper(buildDir string, packages []string, imageChroot *safec
 	for _, packageName := range packages {
 		tnfInstallCommonArgs[len(tnfInstallCommonArgs)-1] = packageName
 
-		var stderr string
 		err = imageChroot.Run(func() error {
-			_, stderr, err = shell.Execute("tdnf", tnfInstallCommonArgs...)
+			err := shell.ExecuteLiveWithCallback(tdnfInstallStdoutFilter, logger.Log.Warn, false, "tdnf", tnfInstallCommonArgs...)
 			return err
 		})
 		if err != nil {
-			logger.Log.Debugf("tdnf install stderr: %s", stderr)
 			return fmt.Errorf("failed to install package (%s): %w", packageName, err)
 		}
 	}
@@ -218,6 +216,21 @@ func updatePackagesHelper(buildDir string, packages []string, imageChroot *safec
 	}
 
 	return nil
+}
+
+func tdnfInstallStdoutFilter(args ...interface{}) {
+	const tdnfInstallPrefix = "Installing/Updating: "
+
+	if len(args) == 0 {
+		return
+	}
+
+	line := args[0].(string)
+	if !strings.HasPrefix(line, tdnfInstallPrefix) {
+		return
+	}
+
+	logger.Log.Debug(line)
 }
 
 func extractTarball(tarballFile string, directory string) error {
