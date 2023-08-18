@@ -21,7 +21,7 @@ var (
 	outputImageFile   = app.Flag("output-image-file", "Path to write the customized image to.").Required().String()
 	outputImageFormat = app.Flag("output-image-format", "Format of output image. Supported: vhd, vhdx, qcow2, raw.").Required().Enum("vhd", "vhdx", "qcow2", "raw")
 	configFile        = app.Flag("config-file", "Path of the image customization config file.").Required().String()
-	rpmSources        = app.Flag("rpm-source", "Path of the image customization config file.").Strings()
+	rpmSources        = app.Flag("rpm-source", "Path to a RPMs tarball or a directory containing RPMs.").Strings()
 	logFile           = exe.LogFileFlag(app)
 	logLevel          = exe.LogLevelFlag(app)
 )
@@ -41,7 +41,7 @@ func customizeImage() error {
 	var err error
 
 	err = imagecustomizerlib.CustomizeImageWithConfigFile(*buildDir, *configFile, *imageFile,
-		rpmSources, *outputImageFile, *outputImageFormat)
+		*rpmSources, *outputImageFile, *outputImageFormat)
 	if err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
 	"golang.org/x/sys/unix"
 )
 
@@ -18,6 +19,9 @@ type Mount struct {
 
 func NewMount(source, target, fstype string, flags uintptr, data string) (*Mount, error) {
 	var err error
+
+	logger.Log.Debugf("Mounting: source: (%s), target: (%s), fstype: (%s), flags: (%#x), data: (%s)",
+		source, target, fstype, flags, data)
 
 	err = os.MkdirAll(target, os.ModePerm)
 	if err != nil {
@@ -35,6 +39,10 @@ func NewMount(source, target, fstype string, flags uintptr, data string) (*Mount
 	}
 
 	return mountHandle, nil
+}
+
+func (m *Mount) Target() string {
+	return m.target
 }
 
 func (m *Mount) Close() error {
