@@ -52,6 +52,8 @@ func (m *Mount) Close() error {
 		return nil
 	}
 
+	logger.Log.Debugf("Unmounting (%s)", m.target)
+
 	err = unix.Unmount(m.target, 0)
 	if err != nil {
 		return fmt.Errorf("failed to unmount (%s): %w", m.target, err)
