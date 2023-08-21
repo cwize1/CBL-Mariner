@@ -151,7 +151,7 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 	// Mount the boot partition.
 	bootDir := filepath.Join(buildDir, "bootpartition")
 
-	efiSystemPartitionMount, err := safemount.NewMount(efiSystemPartition.Path, bootDir, efiSystemPartition.FileSystemType, 0, "")
+	efiSystemPartitionMount, err := safemount.NewMount(efiSystemPartition.Path, bootDir, efiSystemPartition.FileSystemType, 0, "", true)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to mount EFI system partition: %w", err)
 	}

@@ -13,32 +13,52 @@ import (
 )
 
 type Mount struct {
-	target    string
-	isMounted bool
+	target     string
+	isMounted  bool
+	dirCreated bool
 }
 
-func NewMount(source, target, fstype string, flags uintptr, data string) (*Mount, error) {
+func NewMount(source, target, fstype string, flags uintptr, data string, makeAndDeleteDir bool) (*Mount, error) {
+	var err error
+
+	mount := &Mount{
+		target: target,
+	}
+
+	err = mount.newMountHelper(source, target, fstype, flags, data, makeAndDeleteDir)
+	if err != nil {
+		cleanupErr := mount.Close()
+		if cleanupErr != nil {
+			logger.Log.Warnf("failed to cleanup failed mount: %s", cleanupErr)
+		}
+		return nil, err
+	}
+
+	return mount, nil
+}
+
+func (m *Mount) newMountHelper(source, target, fstype string, flags uintptr, data string, makeAndDeleteDir bool) error {
 	var err error
 
 	logger.Log.Debugf("Mounting: source: (%s), target: (%s), fstype: (%s), flags: (%#x), data: (%s)",
 		source, target, fstype, flags, data)
 
-	err = os.MkdirAll(target, os.ModePerm)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create mount directory (%s): %w", target, err)
+	if makeAndDeleteDir {
+		err = os.MkdirAll(target, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create mount directory (%s): %w", target, err)
+		}
+
+		m.dirCreated = true
 	}
 
 	err = unix.Mount(source, target, fstype, flags, data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to mount (%s) to (%s): %w", source, target, err)
+		return fmt.Errorf("failed to mount (%s) to (%s): %w", source, target, err)
 	}
 
-	mountHandle := &Mount{
-		target:    target,
-		isMounted: true,
-	}
-
-	return mountHandle, nil
+	m.isMounted = true
+	return nil
 }
 
 func (m *Mount) Target() string {
@@ -48,17 +68,27 @@ func (m *Mount) Target() string {
 func (m *Mount) Close() error {
 	var err error
 
-	if !m.isMounted {
-		return nil
-	}
-
 	logger.Log.Debugf("Unmounting (%s)", m.target)
 
-	err = unix.Unmount(m.target, 0)
-	if err != nil {
-		return fmt.Errorf("failed to unmount (%s): %w", m.target, err)
+	if m.isMounted {
+		err = unix.Unmount(m.target, 0)
+		if err != nil {
+			return fmt.Errorf("failed to unmount (%s): %w", m.target, err)
+		}
+
+		m.isMounted = false
 	}
 
-	m.isMounted = false
+	if m.dirCreated {
+		// Note: Do not use `RemoveAll` here in case the unmount silently failed.
+		// (This is unlikely. But "belt and braces".)
+		err = os.Remove(m.target)
+		if err != nil {
+			return fmt.Errorf("failed to delete source rpms mount directory (%s): %w", m.target, err)
+		}
+
+		m.dirCreated = false
+	}
+
 	return nil
 }
