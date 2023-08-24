@@ -46,6 +46,11 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 ) error {
 	var err error
 
+	err = validateConfig(baseConfigPath, config)
+	if err != nil {
+		return fmt.Errorf("invalid image config: %w", err)
+	}
+
 	buildDirAbs, err := filepath.Abs(buildDir)
 	if err != nil {
 		return err
@@ -122,6 +127,36 @@ func customizeImageHelper(buildDir string, baseConfigPath string, config *imagec
 	err = doCustomizations(buildDir, baseConfigPath, config, imageChroot, rpmsSources)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func validateConfig(baseConfigPath string, config *imagecustomizerapi.SystemConfig) error {
+	var err error
+
+	for i, script := range config.PostInstallScripts {
+		err = validateScript(baseConfigPath, &script)
+		if err != nil {
+			return fmt.Errorf("invalid PostInstallScripts item at index %d: %w", i, err)
+		}
+	}
+
+	for i, script := range config.FinalizeImageScripts {
+		err = validateScript(baseConfigPath, &script)
+		if err != nil {
+			return fmt.Errorf("invalid FinalizeImageScripts item at index %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func validateScript(baseConfigPath string, script *imagecustomizerapi.Script) error {
+	// Ensure that install scripts sit under the config file's parent directory.
+	// This allows the install script to be run in the chroot environment by bind mounting the config directory.
+	if !filepath.IsLocal(script.Path) {
+		return fmt.Errorf("install script (%s) is not under config directory (%s)", script.Path, baseConfigPath)
 	}
 
 	return nil

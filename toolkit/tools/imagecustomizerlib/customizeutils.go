@@ -13,6 +13,13 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safemount.go"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
+	"golang.org/x/sys/unix"
+)
+
+const (
+	configDirMountPathInChroot = "/_imageconfigs"
 )
 
 var (
@@ -39,9 +46,19 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
+	err = runScripts(baseConfigPath, config.PostInstallScripts, imageChroot)
+	if err != nil {
+		return err
+	}
+
 	err = handleKernelCommandLine(config.KernelCommandLine.ExtraCommandLine, imageChroot)
 	if err != nil {
 		return fmt.Errorf("failed to add extra kernel command line: %w", err)
+	}
+
+	err = runScripts(baseConfigPath, config.FinalizeImageScripts, imageChroot)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -79,6 +96,40 @@ func copyAdditionalFiles(baseConfigPath string, additionalFiles map[string]image
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func runScripts(baseConfigPath string, scripts []imagecustomizerapi.Script, imageChroot *safechroot.Chroot) error {
+	configDirMountPath := filepath.Join(imageChroot.RootDir(), configDirMountPathInChroot)
+
+	mount, err := safemount.NewMount(baseConfigPath, configDirMountPath, "", unix.MS_BIND|unix.MS_RDONLY, "", true)
+	if err != nil {
+		return err
+	}
+	defer mount.Close()
+
+	for _, script := range scripts {
+		scriptPathInChroot := filepath.Join(configDirMountPathInChroot, script.Path)
+		command := fmt.Sprintf("%s %s", scriptPathInChroot, script.Args)
+
+		err = imageChroot.UnsafeRun(func() error {
+			err := shell.ExecuteLive(false, shell.ShellProgram, "-c", command)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	err = mount.Close()
+	if err != nil {
+		return err
 	}
 
 	return nil

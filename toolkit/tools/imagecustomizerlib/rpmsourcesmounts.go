@@ -17,6 +17,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	rpmsMountParentDirInChroot = "/_localrpms"
+)
+
 type rpmSourcesMounts struct {
 	rpmsMountParentDir        string
 	rpmsMountParentDirCreated bool

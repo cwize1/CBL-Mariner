@@ -14,10 +14,6 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
 )
 
-const (
-	rpmsMountParentDirInChroot = "/sourcerpms"
-)
-
 func updatePackages(buildDir string, baseConfigPath string, packageLists []string, packages []string,
 	imageChroot *safechroot.Chroot, rpmsSources []string,
 ) error {
