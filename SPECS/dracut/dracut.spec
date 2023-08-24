@@ -4,7 +4,7 @@
 Summary:        dracut to create initramfs
 Name:           dracut
 Version:        055
-Release:        5%{?dist}
+Release:        6%{?dist}
 # The entire source code is GPLv2+
 # except install/* which is LGPLv2+
 License:        GPLv2+ AND LGPLv2+
@@ -15,7 +15,11 @@ URL:            https://dracut.wiki.kernel.org/
 Source0:        http://www.kernel.org/pub/linux/utils/boot/dracut/%{name}-%{version}.tar.xz
 Source1:        https://www.gnu.org/licenses/lgpl-2.1.txt
 Source2:        mkinitrd
-Source3:        megaraid.conf
+Source3:        crypt.conf
+Source4:        dm.conf
+Source5:        lvm.conf
+Source6:        megaraid.conf
+Source7:        multipath.conf
 Patch0:         disable-xattr.patch
 Patch1:         fix-initrd-naming-for-mariner.patch
 Patch2:         fix-functions-Avoid-calling-grep-with-PCRE-P.patch
@@ -44,6 +48,22 @@ into the initramfs. dracut contains various modules which are driven by the
 event-based udev. Having root on MD, DM, LVM2, LUKS is supported as well as
 NFS, iSCSI, NBD, FCoE with the dracut-network package.
 
+%package crypt
+Summary:        dracut configuration needed to build an initramfs with crypt module support
+Requires:       %{name} = %{version}-%{release}
+Requires:       (systemd or cryptsetup)
+
+%description crypt
+This package contains dracut configuration needed to build an initramfs with crypt module support.
+
+%package dm
+Summary:        dracut configuration needed to build an initramfs with dm module support
+Requires:       %{name} = %{version}-%{release}
+Requires:       device-mapper
+
+%description dm
+This package contains dracut configuration needed to build an initramfs with dm module support.
+
 %package fips
 Summary:        dracut modules to build a dracut initramfs with an integrity check
 Requires:       %{name} = %{version}-%{release}
@@ -54,12 +74,29 @@ Requires:       nss
 This package requires everything which is needed to build an
 initramfs with dracut, which does an integrity check.
 
+%package lvm
+Summary:        dracut configuration needed to build an initramfs with lvm module support
+Requires:       %{name} = %{version}-%{release}
+Requires:       lvm2
+
+%description lvm
+This package contains dracut configuration needed to build an initramfs with lvm module support.
+
 %package megaraid
 Summary:        dracut configuration needed to build an initramfs with MegaRAID driver support
 Requires:       %{name} = %{version}-%{release}
 
 %description megaraid
 This package contains dracut configuration needed to build an initramfs with MegaRAID driver support.
+
+%package multipath
+Summary:        dracut configuration needed to build an initramfs with multipath module support
+Requires:       %{name} = %{version}-%{release}
+Requires:       device-mapper-multipath
+Requires:       kpartx
+
+%description multipath
+This package contains dracut configuration needed to build an initramfs with multipath module support.
 
 %package tools
 Summary:        dracut tools to build the local initramfs
@@ -113,7 +150,11 @@ install -m 0644 dracut.conf.d/fips.conf.example %{buildroot}%{_sysconfdir}/dracu
 
 install -m 0755 %{SOURCE2} %{buildroot}%{_bindir}/mkinitrd
 
-install -m 0644 %{SOURCE3} %{buildroot}%{_sysconfdir}/dracut.conf.d/50-megaraid.conf
+install -m 0644 %{SOURCE3} %{buildroot}%{_sysconfdir}/dracut.conf.d/50-crypt.conf
+install -m 0644 %{SOURCE4} %{buildroot}%{_sysconfdir}/dracut.conf.d/50-dm.conf
+install -m 0644 %{SOURCE5} %{buildroot}%{_sysconfdir}/dracut.conf.d/50-lvm.conf
+install -m 0644 %{SOURCE6} %{buildroot}%{_sysconfdir}/dracut.conf.d/50-megaraid.conf
+install -m 0644 %{SOURCE7} %{buildroot}%{_sysconfdir}/dracut.conf.d/50-multipath.conf
 
 # create compat symlink
 mkdir -p %{buildroot}%{_sbindir}
@@ -175,9 +216,25 @@ ln -sr %{buildroot}%{_bindir}/dracut %{buildroot}%{_sbindir}/dracut
 %{_sysconfdir}/dracut.conf.d/40-fips.conf
 %config(missingok) %{_sysconfdir}/system-fips
 
+%files crypt
+%defattr(-,root,root,0755)
+%{_sysconfdir}/dracut.conf.d/50-crypt.conf
+
+%files dm
+%defattr(-,root,root,0755)
+%{_sysconfdir}/dracut.conf.d/50-dm.conf
+
+%files lvm
+%defattr(-,root,root,0755)
+%{_sysconfdir}/dracut.conf.d/50-lvm.conf
+
 %files megaraid
 %defattr(-,root,root,0755)
 %{_sysconfdir}/dracut.conf.d/50-megaraid.conf
+
+%files multipath
+%defattr(-,root,root,0755)
+%{_sysconfdir}/dracut.conf.d/50-multipath.conf
 
 %files tools
 %defattr(-,root,root,0755)
@@ -188,6 +245,9 @@ ln -sr %{buildroot}%{_bindir}/dracut %{buildroot}%{_sbindir}/dracut
 %dir %{_sharedstatedir}/dracut/overlay
 
 %changelog
+* Tue Aug 23 2023 Chris Gunn <chrisgun@microsoft.com> - 055-6
+- Add dracut-crypt, dracut-dm, dracut-lvm, and dracut-multipath packages.
+
 * Thu Apr 27 2023 Daniel McIlvaney <damcilva@microsoft.com> - 055-5
 - Avoid using JIT'd perl in grep since it is blocked by SELinux.
 

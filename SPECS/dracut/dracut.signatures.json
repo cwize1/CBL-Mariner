@@ -1,8 +1,12 @@
 {
  "Signatures": {
+  "crypt.conf": "32d7756c30b91e90d562fa7420eb6b364f3a0e04d744daf73e2af35edfc4c676",
+  "dm.conf": "d086be351ba0727432d68905e0200794d3df96dfbaca34dc2c22a8e12991d097",
   "dracut-055.tar.xz": "4baa08206cceeb124dbf1075a0daf774b5a8f144ce2e01d82a144af3020fd65b",
   "lgpl-2.1.txt": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
+  "lvm.conf": "4dac452a5073a22f7f9aa4c8e69786f87a88081f8e4dd8115bfc7dbbb915bad8",
   "megaraid.conf": "914824cdbe0c525b71efa05a75e453335b0068beb8bc28bef2a5866d74bf7dd4",
-  "mkinitrd": "32a0e19de954a356a0f1903a1f75d3266493b55d71b0eeab6bd07b585e955dcf"
+  "mkinitrd": "32a0e19de954a356a0f1903a1f75d3266493b55d71b0eeab6bd07b585e955dcf",
+  "multipath.conf": "062533aedb93d8920f82e9e97e8e0b360e6c1abb9acdbd1b8206a69be0ab4369"
  }
 }
