@@ -4,17 +4,21 @@
 package imagecustomizerlib
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/packagerepo/repomanager/rpmrepomanager"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safemount.go"
 	"golang.org/x/sys/unix"
+	"gopkg.in/ini.v1"
 )
 
 const (
@@ -57,74 +61,171 @@ func (m *rpmSourcesMounts) mountRpmSourcesHelper(buildDir string, imageChroot *s
 
 	m.rpmsMountParentDirCreated = true
 
+	allReposConfig := ini.Empty()
+
 	// Mount the RPM sources.
-	for i, rpmSource := range rpmsSources {
-		rpmSourceIsFile, err := file.IsFile(rpmSource)
+	for _, rpmSource := range rpmsSources {
+		fileType, err := getRpmSourceFileType(rpmSource)
 		if err != nil {
-			return fmt.Errorf("failed to get file type of RPM source (%s): %w", rpmSource, err)
+			return fmt.Errorf("failed to get RPM source file type (%s): %w", rpmSource, err)
 		}
 
-		var rpmSourceName string
-		var rpmsDirectory string
+		switch fileType {
+		case "dir":
+			err = m.createRepoFromDirectory(rpmSource, allReposConfig, imageChroot)
 
-		// We assume RPM sources that are files are RPM tarballs.
-		if rpmSourceIsFile {
-			// Get a unique ID for the RPM tarball.
-			logger.Log.Debugf("Calculating SHA-256 of rpms tarball (%s)", rpmSource)
-			rpmSourceHash, err := file.GenerateSHA256(rpmSource)
-			if err != nil {
-				return fmt.Errorf("failed to get hash of RPM tarball (%s): %w", rpmSource, err)
-			}
+		case "gz":
+			err = m.createRepoFromRpmsTarball(extractedRpmsDir, rpmSource, allReposConfig, imageChroot)
 
-			// Check if the tarball has already been extracted.
-			extractDirectory := path.Join(extractedRpmsDir, rpmSourceHash)
-			extractDirectoryExists, err := file.DirExists(extractDirectory)
-			if err != nil {
-				return fmt.Errorf("failed to stat tarball extract directory (%s): %w", extractDirectory, err)
-			}
+		case "repo.conf":
+			err = m.createRepoFromRepoConfig(rpmSource, allReposConfig, imageChroot)
 
-			if !extractDirectoryExists {
-				err = os.MkdirAll(extractDirectory, os.ModePerm)
-				if err != nil {
-					return fmt.Errorf("failed to create RPMs extract directory (%s): %w", extractedRpmsDir, err)
-				}
-
-				// Extract the RPMs tarball.
-				logger.Log.Debugf("Extracting rpms tarball (%s)", rpmSource)
-				err = extractTarball(rpmSource, extractDirectory)
-				if err != nil {
-					removeErr := os.RemoveAll(extractDirectory)
-					if removeErr != nil {
-						logger.Log.Warnf("failed to delete tarball extract directory (%s)", extractDirectory)
-					}
-					return fmt.Errorf("failed to extract tarball (%s): %w", rpmSource, err)
-				}
-			}
-
-			// Get the name of the tarball file, without the extension.
-			rpmSourceName = path.Base(rpmSource)
-			if extensionIndex := strings.Index(rpmSourceName, "."); extensionIndex >= 0 {
-				rpmSourceName = rpmSourceName[:extensionIndex]
-			}
-
-			rpmsDirectory = extractDirectory
-		} else {
-			rpmSourceName = path.Base(rpmSource)
-			rpmsDirectory = rpmSource
+		default:
+			return fmt.Errorf("unknown RPM source type (%s)", rpmSource)
 		}
-
-		targetName := fmt.Sprintf("%02d%s", i, rpmSourceName)
-		mountTargetDirectory := path.Join(imageChroot.RootDir(), rpmsMountParentDirInChroot, targetName)
-
-		// Create a read-only bind mount.
-		mount, err := safemount.NewMount(rpmsDirectory, mountTargetDirectory, "", unix.MS_BIND|unix.MS_RDONLY, "", true)
 		if err != nil {
-			return fmt.Errorf("failed to mount RPM source directory from (%s) to (%s): %w", rpmsDirectory, mountTargetDirectory, err)
+			return err
 		}
-
-		m.mounts = append(m.mounts, mount)
 	}
 
+	return nil
+}
+
+func (m *rpmSourcesMounts) createRepoFromDirectory(rpmSource string, allReposConfig *ini.File,
+	imageChroot *safechroot.Chroot,
+) error {
+	// Turn directory into an RPM repo.
+	err := rpmrepomanager.CreateOrUpdateRepo(rpmSource)
+	if err != nil {
+		return fmt.Errorf("failed create RPMs repo from directory (%s): %w", rpmSource, err)
+	}
+
+	rpmSourceName := path.Base(rpmSource)
+
+	// Mount the directory.
+	err = m.mountRpmsDirectory(rpmSourceName, rpmSource, imageChroot)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Creates an RPM repo from a tarball containing *.rpm files.
+func (m *rpmSourcesMounts) createRepoFromRpmsTarball(extractedRpmsDir string, rpmSource string,
+	allReposConfig *ini.File, imageChroot *safechroot.Chroot,
+) error {
+	// Get a unique ID for the RPM tarball.
+	logger.Log.Debugf("Calculating SHA-256 of rpms tarball (%s)", rpmSource)
+	rpmSourceHash, err := file.GenerateSHA256(rpmSource)
+	if err != nil {
+		return fmt.Errorf("failed to get hash of RPM tarball (%s): %w", rpmSource, err)
+	}
+
+	// Check if the tarball has already been extracted.
+	extractDirectory := path.Join(extractedRpmsDir, rpmSourceHash)
+	extractDirectoryExists, err := file.DirExists(extractDirectory)
+	if err != nil {
+		return fmt.Errorf("failed to stat tarball extract directory (%s): %w", extractDirectory, err)
+	}
+
+	if !extractDirectoryExists {
+		err = os.MkdirAll(extractDirectory, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create RPMs extract directory (%s): %w", extractedRpmsDir, err)
+		}
+
+		err = createRepoFromRpmsTarballHelper(rpmSource, extractDirectory)
+		if err != nil {
+			removeErr := os.RemoveAll(extractDirectory)
+			if removeErr != nil {
+				logger.Log.Warnf("failed to delete tarball extract directory (%s)", extractDirectory)
+			}
+			return err
+		}
+
+	}
+
+	// Get the name of the tarball file, without the extension.
+	rpmSourceName := path.Base(rpmSource)
+	if extensionIndex := strings.Index(rpmSourceName, "."); extensionIndex >= 0 {
+		rpmSourceName = rpmSourceName[:extensionIndex]
+	}
+
+	// Mount the directory.
+	err = m.mountRpmsDirectory(rpmSourceName, extractDirectory, imageChroot)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Extract the RPMs tarball and then turn the directory into an RPM repo.
+func createRepoFromRpmsTarballHelper(rpmSource string, extractDirectory string) error {
+	var err error
+
+	// Extract the RPMs tarball.
+	logger.Log.Debugf("Extracting rpms tarball (%s)", rpmSource)
+	err = extractTarball(rpmSource, extractDirectory)
+	if err != nil {
+		return fmt.Errorf("failed to extract RPMs tarball (%s): %w", rpmSource, err)
+	}
+
+	// Turn directory into an RPM repo.
+	err = rpmrepomanager.CreateRepo(extractDirectory)
+	if err != nil {
+		return fmt.Errorf("failed create RPMs repo from RPMs tarball (%s): %w", rpmSource, err)
+	}
+
+	return nil
+}
+
+func (m *rpmSourcesMounts) createRepoFromRepoConfig(rpmSource string, allReposConfig *ini.File,
+	imageChroot *safechroot.Chroot,
+) error {
+	// Parse the repo config file.
+	reposConfig, err := ini.Load(rpmSource)
+	if err != nil {
+		return fmt.Errorf("failed load repo config file (%s): %w", rpmSource, err)
+	}
+
+	for _, repoConfig := range reposConfig.Sections() {
+		if repoConfig.Name() == "" {
+			return fmt.Errorf("rpm repo config files must not contain nameless sections (%s)", rpmSource)
+		}
+
+		// Copy over the repo details to the all-repos config.
+		newSection, err := allReposConfig.NewSection(repoConfig.Name())
+		if err != nil {
+			return err
+		}
+
+		for _, key := range repoConfig.Keys() {
+			_, err := newSection.NewKey(key.Name(), key.Value())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *rpmSourcesMounts) mountRpmsDirectory(rpmSourceName string, rpmsDirectory string,
+	imageChroot *safechroot.Chroot,
+) error {
+	i := len(m.mounts)
+	targetName := fmt.Sprintf("%02d%s", i, rpmSourceName)
+	mountTargetDirectory := path.Join(imageChroot.RootDir(), rpmsMountParentDirInChroot, targetName)
+
+	// Create a read-only bind mount.
+	mount, err := safemount.NewMount(rpmsDirectory, mountTargetDirectory, "", unix.MS_BIND|unix.MS_RDONLY, "", true)
+	if err != nil {
+		return fmt.Errorf("failed to mount RPM source directory from (%s) to (%s): %w", rpmsDirectory, mountTargetDirectory, err)
+	}
+
+	m.mounts = append(m.mounts, mount)
 	return nil
 }
 
@@ -159,4 +260,40 @@ func (m *rpmSourcesMounts) close() error {
 	}
 
 	return nil
+}
+
+func getRpmSourceFileType(filePath string) (string, error) {
+	// First, check if path points to a directory.
+	isDir, err := file.IsDir(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to get type of RPM source (%s): %w", filePath, err)
+	}
+
+	if isDir {
+		return "dir", nil
+	}
+
+	// Check the file's signature.
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	firstBytes := make([]byte, 2)
+	readByteCount, err := file.Read(firstBytes)
+	if err != nil {
+		return "", err
+	}
+
+	switch {
+	case readByteCount >= 2 && bytes.Equal(firstBytes[:2], []byte{0x1F, 0x8B}):
+		return "gz", nil
+
+	case filepath.Ext(filePath) == "conf":
+		return "repo.conf", nil
+
+	default:
+		return "", nil
+	}
 }
