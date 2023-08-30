@@ -15,7 +15,7 @@ import (
 )
 
 func updatePackages(buildDir string, baseConfigPath string, packageLists []string, packages []string,
-	imageChroot *safechroot.Chroot, rpmsSources []string,
+	imageChroot *safechroot.Chroot, rpmsSources []string, useBaseImageRpmRepos bool,
 ) error {
 	var err error
 
@@ -24,7 +24,7 @@ func updatePackages(buildDir string, baseConfigPath string, packageLists []strin
 		return err
 	}
 
-	err = updatePackagesHelper(buildDir, allPackages, imageChroot, rpmsSources)
+	err = updatePackagesHelper(buildDir, allPackages, imageChroot, rpmsSources, useBaseImageRpmRepos)
 	if err != nil {
 		return err
 	}
@@ -53,19 +53,21 @@ func collectPackagesList(baseConfigPath string, packageLists []string, packages 
 	return allPackages, nil
 }
 
-func updatePackagesHelper(buildDir string, packages []string, imageChroot *safechroot.Chroot, rpmsSources []string) error {
+func updatePackagesHelper(buildDir string, packages []string, imageChroot *safechroot.Chroot, rpmsSources []string,
+	useBaseImageRpmRepos bool,
+) error {
 	var err error
 
 	if len(packages) <= 0 {
 		return nil
 	}
 
-	if len(rpmsSources) <= 0 {
+	if len(rpmsSources) <= 0 && !useBaseImageRpmRepos {
 		return fmt.Errorf("have %d packages to install but no RPM sources were specified", len(packages))
 	}
 
 	// Mount RPM sources.
-	mounts, err := mountRpmSources(buildDir, imageChroot, rpmsSources)
+	mounts, err := mountRpmSources(buildDir, imageChroot, rpmsSources, useBaseImageRpmRepos)
 	if err != nil {
 		return err
 	}
@@ -88,7 +90,8 @@ func updatePackagesHelper(buildDir string, packages []string, imageChroot *safec
 		tnfInstallCommonArgs[len(tnfInstallCommonArgs)-1] = packageName
 
 		err = imageChroot.Run(func() error {
-			err := shell.ExecuteLiveWithCallback(tdnfInstallStdoutFilter, logger.Log.Warn, false, "tdnf", tnfInstallCommonArgs...)
+			err := shell.ExecuteLiveWithCallback(tdnfInstallStdoutFilter, logger.Log.Warn, false, "tdnf",
+				tnfInstallCommonArgs...)
 			return err
 		})
 		if err != nil {

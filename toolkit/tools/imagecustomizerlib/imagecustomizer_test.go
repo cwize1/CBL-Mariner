@@ -32,7 +32,8 @@ func TestCustomizeImageEmptyConfig(t *testing.T) {
 	}
 
 	// Customize image.
-	err = CustomizeImage(buildDir, buildDir, &imagecustomizerapi.SystemConfig{}, diskFilePath, nil, outImageFilePath, "vhd")
+	err = CustomizeImage(buildDir, buildDir, &imagecustomizerapi.SystemConfig{}, diskFilePath, nil, outImageFilePath,
+		"vhd", false)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -55,7 +56,7 @@ func TestCustomizeImageCopyFiles(t *testing.T) {
 	}
 
 	// Customize image.
-	err = CustomizeImageWithConfigFile(buildDir, configFile, diskFilePath, nil, outImageFilePath, "raw")
+	err = CustomizeImageWithConfigFile(buildDir, configFile, diskFilePath, nil, outImageFilePath, "raw", false)
 	if !assert.NoError(t, err) {
 		return
 	}
@@ -102,7 +103,7 @@ func TestCustomizeImageKernelCommandLine(t *testing.T) {
 		},
 	}
 
-	err = CustomizeImage(buildDir, buildDir, systemConfig, diskFilePath, nil, outImageFilePath, "raw")
+	err = CustomizeImage(buildDir, buildDir, systemConfig, diskFilePath, nil, outImageFilePath, "raw", false)
 	if !assert.NoError(t, err) {
 		return
 	}

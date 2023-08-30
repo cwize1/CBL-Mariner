@@ -27,11 +27,12 @@ var (
 )
 
 func doCustomizations(buildDir string, baseConfigPath string, config *imagecustomizerapi.SystemConfig,
-	imageChroot *safechroot.Chroot, rpmsSources []string,
+	imageChroot *safechroot.Chroot, rpmsSources []string, useBaseImageRpmRepos bool,
 ) error {
 	var err error
 
-	err = updatePackages(buildDir, baseConfigPath, config.PackageLists, config.Packages, imageChroot, rpmsSources)
+	err = updatePackages(buildDir, baseConfigPath, config.PackageLists, config.Packages, imageChroot,
+		rpmsSources, useBaseImageRpmRepos)
 	if err != nil {
 		return err
 	}
