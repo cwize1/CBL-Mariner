@@ -76,7 +76,7 @@ func updatePackagesHelper(buildDir string, packages []string, imageChroot *safec
 	// `--repofromdir` specified.
 	tnfInstallCommonArgs := []string{
 		"-v", "install", "--nogpgcheck", "--assumeyes",
-		fmt.Sprintf("--repofromdir=sourcerpms,%s", rpmsMountParentDirInChroot),
+		"--setopt", fmt.Sprintf("reposdir=%s", rpmsMountParentDirInChroot),
 	}
 
 	// Add placeholder arg for the package name.
