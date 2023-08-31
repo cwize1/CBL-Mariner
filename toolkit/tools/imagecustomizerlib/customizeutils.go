@@ -12,6 +12,7 @@ import (
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safemount.go"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
@@ -20,6 +21,7 @@ import (
 
 const (
 	configDirMountPathInChroot = "/_imageconfigs"
+	resolveConfPath            = "/etc/resolv.conf"
 )
 
 var (
@@ -30,6 +32,11 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 	imageChroot *safechroot.Chroot, rpmsSources []string, useBaseImageRpmRepos bool,
 ) error {
 	var err error
+
+	err = overrideResolvConf(imageChroot)
+	if err != nil {
+		return err
+	}
 
 	err = updatePackages(buildDir, baseConfigPath, config.PackageLists, config.Packages, imageChroot,
 		rpmsSources, useBaseImageRpmRepos)
@@ -62,7 +69,48 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
+	err = deleteResolvConf(imageChroot)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// Override the resolv.conf file, so that in-chroot processes can access the network.
+func overrideResolvConf(imageChroot *safechroot.Chroot) error {
+	logger.Log.Debugf("Overriding resolv.conf file")
+
+	imageResolveConfPath := filepath.Join(imageChroot.RootDir(), resolveConfPath)
+
+	// Remove the existing resolv.conf file, if it exists.
+	// Note: It is assumed that the image will have a process that runs on boot that will override the resolv.conf
+	// file. For example, systemd-resolved. So, it isn't neccessary to make a back-up of the existing file.
+	err := os.RemoveAll(imageResolveConfPath)
+	if err != nil {
+		return fmt.Errorf("failed to delete existing resolv.conf file: %w", err)
+	}
+
+	err = file.Copy(resolveConfPath, imageResolveConfPath)
+	if err != nil {
+		return fmt.Errorf("failed to override resolv.conf file with host's resolv.conf: %w", err)
+	}
+
+	return nil
+}
+
+// Delete the overridden resolv.conf file.
+func deleteResolvConf(imageChroot *safechroot.Chroot) error {
+	logger.Log.Debugf("Deleting overridden resolv.conf file")
+
+	imageResolveConfPath := filepath.Join(imageChroot.RootDir(), resolveConfPath)
+
+	err := os.RemoveAll(imageResolveConfPath)
+	if err != nil {
+		return fmt.Errorf("failed to delete overridden resolv.conf file: %w", err)
+	}
+
+	return err
 }
 
 func updateHostname(hostname string, imageChroot *safechroot.Chroot) error {

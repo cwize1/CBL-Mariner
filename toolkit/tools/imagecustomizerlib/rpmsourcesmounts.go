@@ -66,12 +66,6 @@ func (m *rpmSourcesMounts) mountRpmSourcesHelper(buildDir string, imageChroot *s
 
 	m.rpmsMountParentDirCreated = true
 
-	// Bind mount the resolv.conf file, so that the chroot has internet access.
-	err = m.mountResolvConf(imageChroot)
-	if err != nil {
-		return err
-	}
-
 	// Unfortunatley, tdnf doesn't support the repository priority field.
 	// So, to ensure repos are used in the correct order, create a single config file containing all the repos, specified
 	// in the order of highest priority to lowest priority.
@@ -144,19 +138,6 @@ func (m *rpmSourcesMounts) mountRpmSourcesHelper(buildDir string, imageChroot *s
 		}
 	}
 
-	return nil
-}
-
-func (m *rpmSourcesMounts) mountResolvConf(imageChroot *safechroot.Chroot) error {
-	resolvConfInChroot := filepath.Join(imageChroot.RootDir(), "/etc/resolv.conf")
-
-	// Create a read-only bind mount for the resolv.conf file.
-	mount, err := safemount.NewMount("/etc/resolv.conf", resolvConfInChroot, "", unix.MS_BIND|unix.MS_RDONLY, "", true)
-	if err != nil {
-		return fmt.Errorf("failed to bind mount resolv.conf file: %w", err)
-	}
-
-	m.mounts = append(m.mounts, mount)
 	return nil
 }
 
