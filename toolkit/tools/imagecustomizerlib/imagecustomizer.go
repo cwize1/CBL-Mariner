@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/diskutils"
@@ -186,16 +187,16 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 	}
 
 	// Mount the boot partition.
-	bootDir := filepath.Join(buildDir, "bootpartition")
+	tmpDir := filepath.Join(buildDir, "tmppartition")
 
-	efiSystemPartitionMount, err := safemount.NewMount(efiSystemPartition.Path, bootDir, efiSystemPartition.FileSystemType, 0, "", true)
+	efiSystemPartitionMount, err := safemount.NewMount(efiSystemPartition.Path, tmpDir, efiSystemPartition.FileSystemType, 0, "", true)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to mount EFI system partition: %w", err)
 	}
 	defer efiSystemPartitionMount.Close()
 
 	// Read the grub.cfg file.
-	grubConfigFilePath := filepath.Join(bootDir, "boot/grub2/grub.cfg")
+	grubConfigFilePath := filepath.Join(tmpDir, "boot/grub2/grub.cfg")
 	grubConfigFile, err := os.ReadFile(grubConfigFilePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read grub.cfg file: %w", err)
@@ -223,11 +224,68 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 		}
 	}
 
-	// TODO: Read /etc/fstab file to find secondary partitions.
-	mountPoints := []*safechroot.MountPoint{
-		safechroot.NewPreDefaultsMountPoint(rootfsPartition.Path, "/", rootfsPartition.FileSystemType, 0, ""),
-		safechroot.NewMountPoint(efiSystemPartition.Path, "/boot/efi", efiSystemPartition.FileSystemType, 0, ""),
+	// Temporarily mount the rootfs partition so that the fstab file can be read.
+	rootfsPartitionMount, err := safemount.NewMount(rootfsPartition.Path, tmpDir, rootfsPartition.FileSystemType, 0, "", true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to mount rootfs partition: %w", err)
+	}
+	defer rootfsPartitionMount.Close()
+
+	// Read the fstab file.
+	fstabPath := filepath.Join(tmpDir, "/etc/fstab")
+	fstabEntries, err := diskutils.ReadFstabFile(fstabPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Close the rootfs partition mount.
+	err = rootfsPartitionMount.Close()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to close rootfs partition mount: %w", err)
+	}
+
+	// Convert fstab entries into mount points.
+	var mountPoints []*safechroot.MountPoint
+	for _, fstabEntry := range fstabEntries {
+		// Ignore special partitions.
+		switch fstabEntry.FsType {
+		case "devtmpfs", "proc", "sysfs", "devpts", "tmpfs":
+			continue
+		}
+
+		source, err := findSourcePartition(fstabEntry.Source, diskPartitions)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		var mountPoint *safechroot.MountPoint
+		if fstabEntry.Target == "/" {
+			mountPoint = safechroot.NewPreDefaultsMountPoint(
+				source, fstabEntry.Target, fstabEntry.FsType,
+				uintptr(fstabEntry.Options), fstabEntry.FsOptions)
+		} else {
+			mountPoint = safechroot.NewMountPoint(
+				source, fstabEntry.Target, fstabEntry.FsType,
+				uintptr(fstabEntry.Options), fstabEntry.FsOptions)
+		}
+
+		mountPoints = append(mountPoints, mountPoint)
 	}
 
 	return nil, mountPoints, nil
+}
+
+func findSourcePartition(source string, partitions []diskutils.PartitionInfo) (string, error) {
+	partUuid, isPartUuid := strings.CutPrefix(source, "PARTUUID=")
+	if isPartUuid {
+		for _, partition := range partitions {
+			if partition.PartUuid == partUuid {
+				return partition.Path, nil
+			}
+		}
+
+		return "", fmt.Errorf("partition not found: %s", source)
+	}
+
+	return "", fmt.Errorf("unknown fstab source type: %s", source)
 }
