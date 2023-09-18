@@ -19,6 +19,7 @@ type SystemConfig struct {
 	AdditionalFiles      map[string]FileConfigList `yaml:"AdditionalFiles"`
 	PostInstallScripts   []Script                  `yaml:"PostInstallScripts"`
 	FinalizeImageScripts []Script                  `yaml:"FinalizeImageScripts"`
+	Users                []User                    `yaml:"Users"`
 }
 
 func (s *SystemConfig) IsValid() error {
