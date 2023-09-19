@@ -1,0 +1,6 @@
+Users:
+- name: root
+  password: password
+
+- name: test
+  password: password

@@ -16,6 +16,7 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safemount.go"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/userutils"
 	"golang.org/x/sys/unix"
 )
 
@@ -50,6 +51,11 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 	}
 
 	err = copyAdditionalFiles(baseConfigPath, config.AdditionalFiles, imageChroot)
+	if err != nil {
+		return err
+	}
+
+	err = addOrUpdateUsers(config.Users, baseConfigPath, imageChroot)
 	if err != nil {
 		return err
 	}
@@ -213,6 +219,85 @@ func handleKernelCommandLine(extraCommandLine string, imageChroot *safechroot.Ch
 	err = os.WriteFile(grub2ConfigFilePath, []byte(newGrub2ConfigFile), 0)
 	if err != nil {
 		return fmt.Errorf("failed to write new grub2 config file: %w", err)
+	}
+
+	return nil
+}
+
+func addOrUpdateUsers(users []imagecustomizerapi.User, baseConfigPath string, imageChroot *safechroot.Chroot) error {
+	for _, user := range users {
+		err := addOrUpdateUser(user, baseConfigPath, imageChroot)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func addOrUpdateUser(user imagecustomizerapi.User, baseConfigPath string, imageChroot *safechroot.Chroot) error {
+	var err error
+
+	logger.Log.Infof("Adding/updating user (%s)", user.Name)
+
+	password := user.Password
+	if user.PasswordPath != "" {
+		// Read password from file.
+		passwordFullPath := filepath.Join(baseConfigPath, user.PasswordPath)
+
+		passwordFileContents, err := os.ReadFile(passwordFullPath)
+		if err != nil {
+			return fmt.Errorf("failed to read password file (%s): %w", passwordFullPath, err)
+		}
+
+		password = string(passwordFileContents)
+	}
+
+	// Hash the password.
+	hashedPassword := password
+	if !user.PasswordHashed {
+		hashedPassword, err = userutils.HashPassword(user.Password)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Check if the user already exists.
+	userExists, err := userutils.UserExists(user.Name, imageChroot)
+	if err != nil {
+		return err
+	}
+
+	if userExists {
+		// Update the user's password.
+		err = userutils.UpdateUserPassword(user.Name, hashedPassword, imageChroot)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Add the user.
+		err = userutils.AddUser(user.Name, hashedPassword, user.UID, imageChroot)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Set user's groups.
+	err = userutils.ConfigureUserGroupMembership(user.Name, user.PrimaryGroup, user.SecondaryGroups, imageChroot)
+	if err != nil {
+		return err
+	}
+
+	// Set user's SSH keys.
+	err = userutils.ProvisionUserSSHCerts(user.Name, user.SSHPubKeyPaths, imageChroot)
+	if err != nil {
+		return err
+	}
+
+	// Set user's startup command.
+	err = userutils.ConfigureUserStartupCommand(user.Name, user.StartupCommand, imageChroot)
+	if err != nil {
+		return err
 	}
 
 	return nil

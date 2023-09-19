@@ -57,5 +57,12 @@ func (s *SystemConfig) IsValid() error {
 		}
 	}
 
+	for i, user := range s.Users {
+		err = user.IsValid()
+		if err != nil {
+			return fmt.Errorf("invalid Users item at index %d: %w", i, err)
+		}
+	}
+
 	return nil
 }
