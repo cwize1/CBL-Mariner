@@ -246,6 +246,7 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 
 	// Convert fstab entries into mount points.
 	var mountPoints []*safechroot.MountPoint
+	var foundRoot bool
 	for _, fstabEntry := range fstabEntries {
 		// Ignore special partitions.
 		switch fstabEntry.FsType {
@@ -263,6 +264,8 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 			mountPoint = safechroot.NewPreDefaultsMountPoint(
 				source, fstabEntry.Target, fstabEntry.FsType,
 				uintptr(fstabEntry.Options), fstabEntry.FsOptions)
+
+			foundRoot = true
 		} else {
 			mountPoint = safechroot.NewMountPoint(
 				source, fstabEntry.Target, fstabEntry.FsType,
@@ -270,6 +273,10 @@ func findPartitions(buildDir string, diskDevice string) ([]string, []*safechroot
 		}
 
 		mountPoints = append(mountPoints, mountPoint)
+	}
+
+	if !foundRoot {
+		return nil, nil, fmt.Errorf("image has invalid fstab file: no root partition found")
 	}
 
 	return nil, mountPoints, nil

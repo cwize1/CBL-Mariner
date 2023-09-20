@@ -53,18 +53,6 @@ func (s *SystemConfig) GetRootPartitionSetting() (rootPartitionSetting *Partitio
 	return nil
 }
 
-// GetMountpointPartitionSetting will search the system configuration for the partition setting
-// corresponding to a mount point.
-func (s *SystemConfig) GetMountpointPartitionSetting(mountPoint string) (partitionSetting *PartitionSetting) {
-	for i, p := range s.PartitionSettings {
-		if p.MountPoint == mountPoint {
-			// We want to reference the actual object in the slice
-			return &s.PartitionSettings[i]
-		}
-	}
-	return nil
-}
-
 // IsValid returns an error if the SystemConfig is not valid
 func (s *SystemConfig) IsValid() (err error) {
 	// IsDefault must be validated by a parent struct

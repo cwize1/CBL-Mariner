@@ -193,6 +193,11 @@ func runScripts(baseConfigPath string, scripts []imagecustomizerapi.Script, imag
 func handleKernelCommandLine(extraCommandLine string, imageChroot *safechroot.Chroot) error {
 	var err error
 
+	if extraCommandLine == "" {
+		// Nothing to do.
+		return nil
+	}
+
 	grub2ConfigFilePath := filepath.Join(imageChroot.RootDir(), "/boot/grub2/grub.cfg")
 
 	// Read the existing grub.cfg file.

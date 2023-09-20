@@ -56,3 +56,15 @@ func (p *PartitionSetting) UnmarshalJSON(b []byte) (err error) {
 	}
 	return
 }
+
+// FindMountpointPartitionSetting will search a list of partition settings for the partition setting
+// corresponding to a mount point.
+func FindMountpointPartitionSetting(partitionSettings []PartitionSetting, mountPoint string) (partitionSetting *PartitionSetting) {
+	for _, p := range partitionSettings {
+		if p.MountPoint == mountPoint {
+			// We want to reference the actual object in the slice
+			return &p
+		}
+	}
+	return nil
+}

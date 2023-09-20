@@ -169,6 +169,20 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 		},
 	}
 
+	partitionSettings := []configuration.PartitionSetting{
+		{
+			ID:              "boot",
+			MountPoint:      "/boot/efi",
+			MountOptions:    "umask=0077",
+			MountIdentifier: configuration.MountIdentifierDefault,
+		},
+		{
+			ID:              "rootfs",
+			MountPoint:      "/",
+			MountIdentifier: configuration.MountIdentifierDefault,
+		},
+	}
+
 	// Create raw disk image file.
 	rawDisk, err := diskutils.CreateEmptyDisk(buildDir, "disk.raw", diskConfig)
 	if err != nil {
@@ -183,7 +197,7 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 	defer diskutils.DetachLoopbackDevice(diskDevPath)
 
 	// Set up partitions.
-	_, _, _, _, err = diskutils.CreatePartitions(diskDevPath, diskConfig,
+	partIDToDevPathMap, partIDToFsTypeMap, _, _, err := diskutils.CreatePartitions(diskDevPath, diskConfig,
 		configuration.RootEncryption{}, configuration.ReadOnlyVerityRoot{})
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("failed to create partitions on disk (%s): %w", diskDevPath, err)
@@ -234,6 +248,23 @@ func createFakeEfiImage(buildDir string) (string, []string, []*safechroot.MountP
 	err = installutils.InstallGrubEnv(imageChroot.RootDir(), assetsDir)
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("failed to install grubenv file: %w", err)
+	}
+
+	// Write a fake fstab file so that the partition discovery logic works.
+	err = os.Mkdir(filepath.Join(imageChroot.RootDir(), "etc"), os.ModePerm)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to add /etc dir: %w", err)
+	}
+
+	mountPointMap, mountPointToFsTypeMap, mountPointToMountArgsMap, _ := installutils.CreateMountPointPartitionMap(
+		partIDToDevPathMap, partIDToFsTypeMap, partitionSettings,
+	)
+
+	err = installutils.UpdateFstab(imageChroot.RootDir(), partitionSettings, mountPointMap, mountPointToFsTypeMap,
+		mountPointToMountArgsMap, partIDToDevPathMap, partIDToFsTypeMap, false, /*hidepidEnabled*/
+	)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("failed to install fstab file: %w", err)
 	}
 
 	return rawDisk, newMountDirectories, mountPoints, nil
