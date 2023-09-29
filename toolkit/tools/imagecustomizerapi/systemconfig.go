@@ -13,9 +13,13 @@ import (
 // SystemConfig defines how each system present on the image is supposed to be configured.
 type SystemConfig struct {
 	Hostname             string                    `yaml:"Hostname"`
+	PackageLists         []string                  `yaml:"PackageLists"`
+	Packages             []string                  `yaml:"Packages"`
+	KernelCommandLine    KernelCommandLine         `yaml:"KernelCommandLine"`
 	AdditionalFiles      map[string]FileConfigList `yaml:"AdditionalFiles"`
 	PostInstallScripts   []Script                  `yaml:"PostInstallScripts"`
 	FinalizeImageScripts []Script                  `yaml:"FinalizeImageScripts"`
+	Users                []User                    `yaml:"Users"`
 }
 
 func (s *SystemConfig) IsValid() error {
@@ -25,6 +29,11 @@ func (s *SystemConfig) IsValid() error {
 		if !govalidator.IsDNSName(s.Hostname) || strings.Contains(s.Hostname, "_") {
 			return fmt.Errorf("invalid hostname: %s", s.Hostname)
 		}
+	}
+
+	err = s.KernelCommandLine.IsValid()
+	if err != nil {
+		return fmt.Errorf("invalid KernelCommandLine: %w", err)
 	}
 
 	for sourcePath, fileConfigList := range s.AdditionalFiles {
@@ -45,6 +54,13 @@ func (s *SystemConfig) IsValid() error {
 		err = script.IsValid()
 		if err != nil {
 			return fmt.Errorf("invalid FinalizeImageScripts item at index %d: %w", i, err)
+		}
+	}
+
+	for i, user := range s.Users {
+		err = user.IsValid()
+		if err != nil {
+			return fmt.Errorf("invalid Users item at index %d: %w", i, err)
 		}
 	}
 

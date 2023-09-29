@@ -46,7 +46,7 @@ const (
 	FileFlagHelp = "Path to the image's log file."
 
 	defaultLogFileLevel   = logrus.DebugLevel
-	defaultStderrLogLevel = logrus.InfoLevel
+	defaultStderrLogLevel = logrus.TraceLevel
 	parentCallerLevel     = 1
 )
 
