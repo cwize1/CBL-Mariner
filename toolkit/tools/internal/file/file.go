@@ -14,6 +14,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
@@ -141,6 +143,38 @@ func WriteLines(dataLines []string, destinationPath string) (err error) {
 
 	for _, line := range dataLines {
 		_, err = fmt.Fprintln(dstFile, line)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func WriteLinesNoEndLine(dataLines []string, destinationPath string) (err error) {
+	logger.Log.Debugf("Writing to (%s)", destinationPath)
+
+	dstFile, err := os.Create(destinationPath)
+	if err != nil {
+		return
+	}
+	defer dstFile.Close()
+
+	if len(dataLines) <= 0 {
+		return
+	}
+
+	_, err = dstFile.WriteString(dataLines[0])
+	if err != nil {
+		return
+	}
+
+	for _, line := range dataLines[1:] {
+		_, err = fmt.Fprintln(dstFile)
+		if err != nil {
+			return
+		}
+
+		_, err = dstFile.WriteString(line)
 		if err != nil {
 			return
 		}
@@ -333,6 +367,92 @@ func CopyResourceFile(srcFS fs.FS, srcFile, dst string, dirmode os.FileMode, fil
 	err = os.Chmod(dst, filemode)
 	if err != nil {
 		return fmt.Errorf("failed to copy resource (%s) -> (%s):\nfailed to set filemode:\n%w", srcFile, dst, err)
+	}
+
+	return nil
+}
+
+func StringReplace(find, replace, file string) (err error) {
+	fileContent, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+
+	newfileContent := strings.ReplaceAll(string(fileContent), find, replace)
+
+	err = os.WriteFile(file, []byte(newfileContent), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RegexpReplace(pattern, replaceTemplate, file string) (err error) {
+	patternRegexp, err := regexp.Compile(pattern)
+	if err != nil {
+		return err
+	}
+
+	fileContent, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+
+	newfileContent := patternRegexp.ReplaceAllString(string(fileContent), replaceTemplate)
+
+	err = os.WriteFile(file, []byte(newfileContent), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RegexpFindSubmatch(pattern string, matchNum int, filename string) (string, error) {
+	patternRegexp, err := regexp.Compile(pattern)
+	if err != nil {
+		return "", err
+	}
+
+	fileContent, err := os.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+
+	matches := patternRegexp.FindStringSubmatch(string(fileContent))
+	if matches == nil {
+		return "", fmt.Errorf("no matches found in file")
+	}
+
+	return matches[matchNum], nil
+}
+
+// Inserts a line within a file at the specified index (where indexes start at 1).
+func InsertAtLine(line int, value, filename string) (err error) {
+	if line < 1 {
+		return fmt.Errorf("invalid line value (%d)", line)
+	}
+
+	// Change from 1-based index to 0-based index.
+	line -= 1
+
+	lines, err := ReadLines(filename)
+	if err != nil {
+		return err
+	}
+
+	if len(lines) < line {
+		return fmt.Errorf("file (%s) doesn't have the expected number of lines (%d vs. %d)", filename, len(lines), line)
+	}
+
+	newLines := append([]string(nil), lines[0:line]...)
+	newLines = append(newLines, value)
+	newLines = append(newLines, lines[line:]...)
+
+	err = WriteLinesNoEndLine(newLines, filename)
+	if err != nil {
+		return err
 	}
 
 	return nil

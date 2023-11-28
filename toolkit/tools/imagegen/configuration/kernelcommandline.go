@@ -24,12 +24,6 @@ type KernelCommandLine struct {
 	ExtraCommandLine string      `json:"ExtraCommandLine"`
 }
 
-// GetSedDelimeter returns the delimeter which should be used with sed
-// to find/replace the command line strings.
-func (k *KernelCommandLine) GetSedDelimeter() (delimeter string) {
-	return "`"
-}
-
 // IsValid returns an error if the KernelCommandLine is not valid
 func (k *KernelCommandLine) IsValid() (err error) {
 	err = k.CGroup.IsValid()
@@ -48,9 +42,9 @@ func (k *KernelCommandLine) IsValid() (err error) {
 		return err
 	}
 
-	// A character needs to be set aside for use as the sed delimiter, make sure it isn't included in the provided string
-	if strings.Contains(k.ExtraCommandLine, k.GetSedDelimeter()) {
-		return fmt.Errorf("the 'ExtraCommandLine' field contains the %s character which is reserved for use by sed", k.GetSedDelimeter())
+	// Disallow the newline character to avoid it breaking the grub config file.
+	if strings.Contains(k.ExtraCommandLine, "\n") {
+		return fmt.Errorf("the 'ExtraCommandLine' field contains an invalid character")
 	}
 
 	return

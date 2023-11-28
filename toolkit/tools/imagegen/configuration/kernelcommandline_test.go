@@ -21,10 +21,10 @@ var (
 		CGroup:           "version_two",
 		EnableFIPS:       true,
 	}
-	invalidExtraCommandLine     = "invalid=`delim`"
+	invalidExtraCommandLine     = "invalid=\ndelim"
 	validExtraComandLineJSON    = `{"ImaPolicy": ["tcb"], "ExtraCommandLine": "param1=value param2=\"value2 value3\"", "SELinux": "permissive", "CGroup": "version_two", "EnableFIPS": true}`
 	invalidExtraComandLineJSON1 = `{"ImaPolicy": [ "not-an-ima-policy" ]}`
-	invalidExtraComandLineJSON2 = `{"ExtraCommandLine": "` + invalidExtraCommandLine + `"}`
+	invalidExtraComandLineJSON2 = `{"ExtraCommandLine": "invalid=\nndelim" }`
 )
 
 func TestShouldSucceedParsingDefaultCommandLine_KernelCommandLine(t *testing.T) {
@@ -114,11 +114,11 @@ func TestShouldFailWrongSedDelimeter_KernelCommandLine(t *testing.T) {
 
 	err := invalidSedExtraCommandLine.IsValid()
 	assert.Error(t, err)
-	assert.Equal(t, "the 'ExtraCommandLine' field contains the ` character which is reserved for use by sed", err.Error())
+	assert.Equal(t, "the 'ExtraCommandLine' field contains an invalid character", err.Error())
 
 	err = remarshalJSON(invalidSedExtraCommandLine, &checkedCommandline)
 	assert.Error(t, err)
-	assert.Equal(t, "failed to parse [KernelCommandLine]: the 'ExtraCommandLine' field contains the ` character which is reserved for use by sed", err.Error())
+	assert.Equal(t, "failed to parse [KernelCommandLine]: the 'ExtraCommandLine' field contains an invalid character", err.Error())
 }
 
 func TestShouldSucceedParsingValidJSON_KernelCommandLine(t *testing.T) {
@@ -139,5 +139,5 @@ func TestShouldFailParsingInvalidJSON_KernelCommandLine(t *testing.T) {
 	checkedCommandline = KernelCommandLine{}
 	err = marshalJSONString(invalidExtraComandLineJSON2, &checkedCommandline)
 	assert.Error(t, err)
-	assert.Equal(t, "failed to parse [KernelCommandLine]: the 'ExtraCommandLine' field contains the ` character which is reserved for use by sed", err.Error())
+	assert.Equal(t, "failed to parse [KernelCommandLine]: the 'ExtraCommandLine' field contains an invalid character", err.Error())
 }
