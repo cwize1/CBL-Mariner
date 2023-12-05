@@ -15,7 +15,7 @@ import (
 )
 
 func addRemoveAndUpdatePackages(buildDir string, baseConfigPath string, config *imagecustomizerapi.SystemConfig,
-	imageChroot *safechroot.Chroot, rpmsSources []string, useBaseImageRpmRepos bool,
+	imageChroot *safechroot.Chroot, rpmsSources []string, useBaseImageRpmRepos bool, toolsChroot *safechroot.Chroot,
 ) error {
 	allPackagesRemove, err := collectPackagesList(baseConfigPath, config.PackageListsRemove, config.PackagesRemove)
 	if err != nil {
@@ -41,7 +41,7 @@ func addRemoveAndUpdatePackages(buildDir string, baseConfigPath string, config *
 			return fmt.Errorf("have packages to install or update but no RPM sources were specified")
 		}
 
-		mounts, err = mountRpmSources(buildDir, imageChroot, rpmsSources, useBaseImageRpmRepos)
+		mounts, err = mountRpmSources(buildDir, imageChroot, rpmsSources, useBaseImageRpmRepos, toolsChroot)
 		if err != nil {
 			return err
 		}

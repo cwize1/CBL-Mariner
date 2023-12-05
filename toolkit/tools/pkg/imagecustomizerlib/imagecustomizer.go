@@ -11,7 +11,10 @@ import (
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safechroot"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/safemount"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/shell"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -19,6 +22,10 @@ const (
 
 	BaseImageName                = "image.raw"
 	PartitionCustomizedImageName = "image2.raw"
+
+	ImageRootDirName     = "imageroot"
+	ToolsDirName         = "toolsroot"
+	ImageRootInToolsPath = "/mnt/imageroot"
 )
 
 var (
@@ -29,7 +36,7 @@ var (
 
 func CustomizeImageWithConfigFile(buildDir string, configFile string, imageFile string,
 	rpmsSources []string, outputImageFile string, outputImageFormat string,
-	useBaseImageRpmRepos bool,
+	useBaseImageRpmRepos bool, toolsBinPath string,
 ) error {
 	var err error
 
@@ -46,8 +53,8 @@ func CustomizeImageWithConfigFile(buildDir string, configFile string, imageFile 
 		return fmt.Errorf("failed to get absolute path of config file directory:\n%w", err)
 	}
 
-	err = CustomizeImage(buildDir, absBaseConfigPath, &config, imageFile, rpmsSources, outputImageFile, outputImageFormat,
-		useBaseImageRpmRepos)
+	err = CustomizeImage(buildDir, absBaseConfigPath, &config, imageFile, rpmsSources, outputImageFile,
+		outputImageFormat, useBaseImageRpmRepos, toolsBinPath)
 	if err != nil {
 		return err
 	}
@@ -57,6 +64,7 @@ func CustomizeImageWithConfigFile(buildDir string, configFile string, imageFile 
 
 func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomizerapi.Config, imageFile string,
 	rpmsSources []string, outputImageFile string, outputImageFormat string, useBaseImageRpmRepos bool,
+	toolsBinPath string,
 ) error {
 	var err error
 
@@ -84,6 +92,35 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 		return err
 	}
 
+	// Mount tools.
+	toolsChroot := (*safechroot.Chroot)(nil)
+	if toolsBinPath != "" {
+		logger.Log.Infof("Mounting tools (%s)", toolsBinPath)
+
+		toolsConnection := NewImageConnection()
+		defer toolsConnection.Close()
+
+		// Connect to squashfs file.
+		err := toolsConnection.ConnectLoopback(toolsBinPath)
+		if err != nil {
+			return fmt.Errorf("failed to connect to tools bin (%s):\n%w", toolsBinPath, err)
+		}
+
+		toolsMountDir := filepath.Join(buildDirAbs, ToolsDirName)
+
+		// Mount squashfs filesystem.
+		mounts := []*safechroot.MountPoint{
+			safechroot.NewPreDefaultsMountPoint(toolsConnection.Loopback().DevicePath(), "/", "squashfs", unix.MS_RDONLY, ""),
+		}
+
+		toolsConnection.ConnectChroot(toolsMountDir, false, nil, mounts)
+		if err != nil {
+			return fmt.Errorf("failed to mount tools bin (%s):\n%w", toolsBinPath, err)
+		}
+
+		toolsChroot = toolsConnection.Chroot()
+	}
+
 	// Convert image file to raw format, so that a kernel loop device can be used to make changes to the image.
 	buildImageFile := filepath.Join(buildDirAbs, BaseImageName)
 
@@ -100,7 +137,8 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 	}
 
 	// Customize the raw image file.
-	err = customizeImageHelper(buildDirAbs, baseConfigPath, config, buildImageFile, rpmsSources, useBaseImageRpmRepos)
+	err = customizeImageHelper(buildDirAbs, baseConfigPath, config, buildImageFile, rpmsSources,
+		useBaseImageRpmRepos, toolsChroot)
 	if err != nil {
 		return err
 	}
@@ -111,7 +149,8 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 	outDir := filepath.Dir(outputImageFile)
 	os.MkdirAll(outDir, os.ModePerm)
 
-	err = shell.ExecuteLiveWithErr(1, "qemu-img", "convert", "-O", qemuOutputImageFormat, buildImageFile, outputImageFile)
+	err = shell.ExecuteLiveWithErr(1, "qemu-img", "convert", "-O", qemuOutputImageFormat, buildImageFile,
+		outputImageFile)
 	if err != nil {
 		return fmt.Errorf("failed to convert image file to format: %s:\n%w", outputImageFormat, err)
 	}
@@ -201,18 +240,40 @@ func validateScript(baseConfigPath string, script *imagecustomizerapi.Script) er
 }
 
 func customizeImageHelper(buildDir string, baseConfigPath string, config *imagecustomizerapi.Config,
-	buildImageFile string, rpmsSources []string, useBaseImageRpmRepos bool,
+	buildImageFile string, rpmsSources []string, useBaseImageRpmRepos bool, toolsChroot *safechroot.Chroot,
 ) error {
-	imageConnection, err := connectToExistingImage(buildImageFile, buildDir, "imageroot")
+	// Connect to the image file.
+	imageConnection, err := connectToExistingImage(buildImageFile, buildDir, ImageRootDirName)
 	if err != nil {
 		return err
 	}
 	defer imageConnection.Close()
 
+	// Create a bind mount to the image's root in the tools directory.
+	var imageInToolsMount *safemount.Mount
+	if toolsChroot != nil {
+		imagerootInToolsChrootDir := filepath.Join(toolsChroot.RootDir(), ImageRootInToolsPath)
+		imageInToolsMount, err = safemount.NewMount(imageConnection.chroot.RootDir(), imagerootInToolsChrootDir, "",
+			unix.MS_BIND|unix.MS_RDONLY, "", false)
+		if err != nil {
+			return err
+		}
+		defer imageInToolsMount.Close()
+	}
+
 	// Do the actual customizations.
-	err = doCustomizations(buildDir, baseConfigPath, config, imageConnection.Chroot(), rpmsSources, useBaseImageRpmRepos)
+	err = doCustomizations(buildDir, baseConfigPath, config, imageConnection.Chroot(), rpmsSources,
+		useBaseImageRpmRepos, toolsChroot)
 	if err != nil {
 		return err
+	}
+
+	// Cleanup.
+	if imageInToolsMount != nil {
+		err = imageInToolsMount.CleanClose()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = imageConnection.CleanClose()

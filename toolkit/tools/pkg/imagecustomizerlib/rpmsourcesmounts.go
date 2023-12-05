@@ -34,12 +34,12 @@ type rpmSourcesMounts struct {
 }
 
 func mountRpmSources(buildDir string, imageChroot *safechroot.Chroot, rpmsSources []string,
-	useBaseImageRpmRepos bool,
+	useBaseImageRpmRepos bool, toolsChroot *safechroot.Chroot,
 ) (*rpmSourcesMounts, error) {
 	var err error
 
 	var mounts rpmSourcesMounts
-	err = mounts.mountRpmSourcesHelper(buildDir, imageChroot, rpmsSources, useBaseImageRpmRepos)
+	err = mounts.mountRpmSourcesHelper(buildDir, imageChroot, rpmsSources, useBaseImageRpmRepos, toolsChroot)
 	if err != nil {
 		cleanupErr := mounts.close()
 		if cleanupErr != nil {
@@ -52,7 +52,7 @@ func mountRpmSources(buildDir string, imageChroot *safechroot.Chroot, rpmsSource
 }
 
 func (m *rpmSourcesMounts) mountRpmSourcesHelper(buildDir string, imageChroot *safechroot.Chroot, rpmsSources []string,
-	useBaseImageRpmRepos bool,
+	useBaseImageRpmRepos bool, toolsChroot *safechroot.Chroot,
 ) error {
 	var err error
 
@@ -106,7 +106,7 @@ func (m *rpmSourcesMounts) mountRpmSourcesHelper(buildDir string, imageChroot *s
 
 		switch fileType {
 		case "dir":
-			err = m.createRepoFromDirectory(rpmSource, allReposConfig, imageChroot)
+			err = m.createRepoFromDirectory(rpmSource, allReposConfig, imageChroot, toolsChroot)
 
 		case "repo":
 			err = m.createRepoFromRepoConfig(rpmSource, true, allReposConfig, imageChroot)
@@ -139,20 +139,27 @@ func (m *rpmSourcesMounts) mountRpmSourcesHelper(buildDir string, imageChroot *s
 }
 
 func (m *rpmSourcesMounts) createRepoFromDirectory(rpmSource string, allReposConfig *ini.File,
-	imageChroot *safechroot.Chroot,
+	imageChroot *safechroot.Chroot, toolsChroot *safechroot.Chroot,
 ) error {
-	// Turn directory into an RPM repo.
-	err := rpmrepomanager.CreateOrUpdateRepo(rpmSource)
-	if err != nil {
-		return fmt.Errorf("failed create RPMs repo from directory (%s):\n%w", rpmSource, err)
-	}
-
 	rpmSourceName := path.Base(rpmSource)
 
 	// Mount the directory.
 	mountTargetDirectoryInChroot, err := m.mountRpmsDirectory(rpmSourceName, rpmSource, imageChroot)
 	if err != nil {
 		return err
+	}
+
+	// Turn directory into an RPM repo.
+	if toolsChroot == nil {
+		err = rpmrepomanager.CreateOrUpdateRepo(rpmSource)
+	} else {
+		mountTargetDirectoryInTools := filepath.Join(ImageRootInToolsPath, mountTargetDirectoryInChroot)
+		err = toolsChroot.UnsafeRun(func() error {
+			return rpmrepomanager.CreateOrUpdateRepo(mountTargetDirectoryInTools)
+		})
+	}
+	if err != nil {
+		return fmt.Errorf("failed create RPMs repo from directory (%s):\n%w", rpmSource, err)
 	}
 
 	// Add local repo config.

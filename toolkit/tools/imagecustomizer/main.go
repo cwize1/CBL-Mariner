@@ -4,15 +4,22 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/exe"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/file"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/logger"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/timestamp"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/pkg/imagecustomizerlib"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/pkg/profile"
 	"gopkg.in/alecthomas/kingpin.v2"
+)
+
+const (
+	ToolsBinName = "toolsbin.squashfs"
 )
 
 var (
@@ -25,6 +32,7 @@ var (
 	configFile               = app.Flag("config-file", "Path of the image customization config file.").Required().String()
 	rpmSources               = app.Flag("rpm-source", "Path to a RPM repo config file or a directory containing RPMs.").Strings()
 	disableBaseImageRpmRepos = app.Flag("disable-base-image-rpm-repos", "Disable the base image's RPM repos as an RPM source").Bool()
+	toolsbin                 = app.Flag("tools-bin", "Manually specify the path of the toolsbin.squashfs file. Default directory is the exe's directory.").String()
 	logFile                  = exe.LogFileFlag(app)
 	logLevel                 = exe.LogLevelFlag(app)
 	profFlags                = exe.SetupProfileFlags(app)
@@ -57,8 +65,36 @@ func main() {
 func customizeImage() error {
 	var err error
 
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	var toolsBinPath string
+	if *toolsbin != "" {
+		// User provided an explicit path for the toolsbin.sqaushfs file.
+		toolsBinPath, err = filepath.Abs(*toolsbin)
+		if err != nil {
+			return err
+		}
+	} else {
+		// Look for the toolsbin.squashfs file in the same directory as the executable.
+		exeDirPath := filepath.Dir(exePath)
+		toolsBinPath = filepath.Join(exeDirPath, ToolsBinName)
+
+		toolsSquashfsExists, err := file.PathExists(toolsBinPath)
+		if err != nil {
+			return fmt.Errorf("failed to check if %s file exists:\n%w", ToolsBinName, err)
+		}
+
+		if !toolsSquashfsExists {
+			logger.Log.Warnf("%s file is missing; will use host's tools", ToolsBinName)
+			toolsBinPath = ""
+		}
+	}
+
 	err = imagecustomizerlib.CustomizeImageWithConfigFile(*buildDir, *configFile, *imageFile,
-		*rpmSources, *outputImageFile, *outputImageFormat, !*disableBaseImageRpmRepos)
+		*rpmSources, *outputImageFile, *outputImageFormat, !*disableBaseImageRpmRepos, toolsBinPath)
 	if err != nil {
 		return err
 	}

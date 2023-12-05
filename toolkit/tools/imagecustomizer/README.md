@@ -29,9 +29,23 @@ Disadvantages:
 
 ## Getting started
 
-1. Download a Mariner core image.
+1. Install dependencies:
 
-2. Create a customization config file.
+   - `blkid`
+   - `cp`
+   - `dd`
+   - `flock`
+   - `losetup`
+   - `lsblk`
+   - `mkfs`
+   - `mkswap`
+   - `mv`
+   - `openssl`
+   - `qemu-img`
+
+2. Download a Mariner core image.
+
+3. Create a customization config file.
 
    For example:
 
@@ -44,7 +58,7 @@ Disadvantages:
    For documentation on the supported configuration options, see:
    [Mariner Image Customizer configuration](./docs/configuration.md)
 
-3. Run the Mariner Image Customizer tool.
+4. Run the Mariner Image Customizer tool.
 
    For example:
 
@@ -65,7 +79,7 @@ Disadvantages:
    For a description of all the command line options, see:
    [Mariner Image Customizer command line](./docs/cli.md)
 
-4. Use the customized image.
+5. Use the customized image.
 
    The customized image is placed in the file that you specified with the
    `--output-image-file` parameter. You can now use this image as you see fit.
