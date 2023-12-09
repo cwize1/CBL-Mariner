@@ -48,7 +48,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 	}
 
 	err = addRemoveAndUpdatePackages(buildDir, baseConfigPath, &config.SystemConfig, imageChroot, rpmsSources,
-		useBaseImageRpmRepos)
+		useBaseImageRpmRepos, partitionsCustomized)
 	if err != nil {
 		return err
 	}

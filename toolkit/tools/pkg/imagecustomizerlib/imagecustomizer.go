@@ -67,7 +67,7 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 	}
 
 	// Validate config.
-	err = validateConfig(baseConfigPath, config)
+	err = validateConfig(baseConfigPath, config, rpmsSources, useBaseImageRpmRepos)
 	if err != nil {
 		return fmt.Errorf("invalid image config:\n%w", err)
 	}
@@ -135,10 +135,13 @@ func toQemuImageFormat(imageFormat string) (string, error) {
 	}
 }
 
-func validateConfig(baseConfigPath string, config *imagecustomizerapi.Config) error {
-	var err error
+func validateConfig(baseConfigPath string, config *imagecustomizerapi.Config, rpmsSources []string,
+	useBaseImageRpmRepos bool,
+) error {
+	partitionsCustomized := config.Disks != nil
 
-	err = validateSystemConfig(baseConfigPath, &config.SystemConfig)
+	err := validateSystemConfig(baseConfigPath, &config.SystemConfig, rpmsSources, useBaseImageRpmRepos,
+		partitionsCustomized)
 	if err != nil {
 		return err
 	}
@@ -146,8 +149,15 @@ func validateConfig(baseConfigPath string, config *imagecustomizerapi.Config) er
 	return nil
 }
 
-func validateSystemConfig(baseConfigPath string, config *imagecustomizerapi.SystemConfig) error {
+func validateSystemConfig(baseConfigPath string, config *imagecustomizerapi.SystemConfig,
+	rpmsSources []string, useBaseImageRpmRepos bool, partitionsCustomized bool,
+) error {
 	var err error
+
+	err = validatePackageLists(baseConfigPath, config, rpmsSources, useBaseImageRpmRepos, partitionsCustomized)
+	if err != nil {
+		return nil
+	}
 
 	for sourceFile := range config.AdditionalFiles {
 		sourceFileFullPath := filepath.Join(baseConfigPath, sourceFile)
@@ -197,6 +207,46 @@ func validateScript(baseConfigPath string, script *imagecustomizerapi.Script) er
 	if scriptStat.Mode()&0111 == 0 {
 		return fmt.Errorf("install script (%s) does not have executable bit set", script.Path)
 	}
+
+	return nil
+}
+
+func validatePackageLists(baseConfigPath string, config *imagecustomizerapi.SystemConfig, rpmsSources []string,
+	useBaseImageRpmRepos bool, partitionsCustomized bool,
+) error {
+	allPackagesRemove, err := collectPackagesList(baseConfigPath, config.PackageListsRemove, config.PackagesRemove)
+	if err != nil {
+		return err
+	}
+
+	allPackagesInstall, err := collectPackagesList(baseConfigPath, config.PackageListsInstall, config.PackagesInstall)
+	if err != nil {
+		return err
+	}
+
+	allPackagesUpdate, err := collectPackagesList(baseConfigPath, config.PackageListsUpdate, config.PackagesUpdate)
+	if err != nil {
+		return err
+	}
+
+	needRpmsSources := len(allPackagesInstall) > 0 || len(allPackagesUpdate) > 0 || config.UpdateBaseImagePackages
+	hasRpmSources := len(rpmsSources) > 0 || useBaseImageRpmRepos
+
+	if !hasRpmSources {
+		if needRpmsSources {
+			return fmt.Errorf("have packages to install or update but no RPM sources were specified")
+		} else if partitionsCustomized {
+			return fmt.Errorf("partitions were customized so the initramfs package needs to be reinstalled but no RPM sources were specified")
+		}
+	}
+
+	config.PackagesRemove = allPackagesRemove
+	config.PackagesInstall = allPackagesInstall
+	config.PackagesUpdate = allPackagesUpdate
+
+	config.PackageListsRemove = nil
+	config.PackageListsInstall = nil
+	config.PackageListsUpdate = nil
 
 	return nil
 }
