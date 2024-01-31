@@ -1744,6 +1744,15 @@ func selinuxRelabelFiles(installChroot *safechroot.Chroot, mountPointToFsTypeMap
 		defer bindMount.Close()
 
 		err = installChroot.UnsafeRun(func() error {
+			runtime.LockOSThread()
+			defer runtime.UnlockOSThread()
+
+			err := setSELinuxExecContext("system_u:system_r:setfiles_mac_t:s0")
+			if err != nil {
+				return fmt.Errorf("failed to set SELinux exec context:\n%w", err)
+			}
+			defer resetSELinuxExecContext()
+
 			// We only want to print basic info, filter out the real output unless at trace level (Execute call handles that)
 			files := 0
 			lastFile := ""
@@ -1756,7 +1765,7 @@ func selinuxRelabelFiles(installChroot *safechroot.Chroot, mountPointToFsTypeMap
 					ReportActionf("SELinux: labelled %d files", files)
 				}
 			}
-			err := shell.ExecuteLiveWithCallback(onStdout, logger.Log.Warn, squashErrors, "setfiles", "-m", "-v", "-r",
+			err = shell.ExecuteLiveWithCallback(onStdout, logger.Log.Warn, squashErrors, "setfiles", "-m", "-v", "-r",
 				targetRootPath, fileContextPath, targetPath)
 			if err != nil {
 				return fmt.Errorf("failed while labeling files (last file: %s) %w", lastFile, err)
@@ -1781,6 +1790,51 @@ func selinuxRelabelFiles(installChroot *safechroot.Chroot, mountPointToFsTypeMap
 	}
 
 	return
+}
+
+func setSELinuxExecContext(context string) error {
+	path := selinuxExecContextPath()
+
+	out, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = out.Write([]byte(context))
+	if err != nil {
+		return err
+	}
+
+	err = out.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func resetSELinuxExecContext() error {
+	path := selinuxExecContextPath()
+
+	out, err := os.OpenFile(path, os.O_TRUNC, 0)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	err = out.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func selinuxExecContextPath() string {
+	taskId := syscall.Gettid()
+	path := fmt.Sprintf("/proc/self/task/%d/attr/exec", taskId)
+	return path
 }
 
 func sed(find, replace, delimiter, file string) (err error) {
