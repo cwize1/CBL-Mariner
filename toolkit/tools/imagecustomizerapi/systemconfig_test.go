@@ -6,6 +6,7 @@ package imagecustomizerapi
 import (
 	"testing"
 
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/ptrutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,4 +72,25 @@ func TestSystemConfigIsValidVerityInValidPartUuid(t *testing.T) {
 	err := invalidVerity.IsValid()
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "invalid Id format")
+}
+
+func TestSystemConfigEnableGrubMkconfigConflictsVerity(t *testing.T) {
+	value := SystemConfig{
+		EnableGrubMkconfig: ptrutils.PtrTo(true),
+		Verity: &Verity{
+			DataPartition: VerityPartition{
+				IdType: IdTypePartLabel,
+				Id:     "a",
+			},
+			HashPartition: VerityPartition{
+				IdType: IdTypePartLabel,
+				Id:     "b",
+			},
+		},
+	}
+
+	err := value.IsValid()
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "verity")
+	assert.ErrorContains(t, err, "grub2-mkconfig")
 }

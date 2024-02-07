@@ -562,6 +562,22 @@ Supported options:
   When this option is specified, the partition layout must contain a partition with the
   `esp` flag.
 
+### EnableGrubMkconfig [bool]
+
+When set to `true`, the image is converted to use the `grub2-mkconfig` tool to update
+the `grub.cfg` file (if it isn't already).
+
+Example:
+
+```yaml
+SystemConfig:
+  EnableGrubMkconfig: true
+  
+  PackagesInstall:
+  # Required packages for grub2-mkconfig
+  - grub2
+```
+
 ### Hostname [string]
 
 Specifies the hostname for the OS.

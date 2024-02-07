@@ -1202,7 +1202,7 @@ func InstallGrubCfg(installRoot, rootDevice, bootUUID, bootPrefix string, encryp
 }
 
 func CallGrubMkconfig(installChroot *safechroot.Chroot) (err error) {
-	squashErrors := false
+	squashErrors := true
 
 	ReportActionf("Running grub2-mkconfig...")
 	err = installChroot.UnsafeRun(func() error {

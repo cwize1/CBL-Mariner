@@ -13,6 +13,7 @@ import (
 // SystemConfig defines how each system present on the image is supposed to be configured.
 type SystemConfig struct {
 	BootType                BootType                  `yaml:"BootType"`
+	EnableGrubMkconfig      *bool                     `yaml:"EnableGrubMkconfig"`
 	Hostname                string                    `yaml:"Hostname"`
 	UpdateBaseImagePackages bool                      `yaml:"UpdateBaseImagePackages"`
 	PackageListsInstall     []string                  `yaml:"PackageListsInstall"`
@@ -44,6 +45,10 @@ func (s *SystemConfig) IsValid() error {
 		if !govalidator.IsDNSName(s.Hostname) || strings.Contains(s.Hostname, "_") {
 			return fmt.Errorf("invalid hostname: %s", s.Hostname)
 		}
+	}
+
+	if s.EnableGrubMkconfig != nil && *s.EnableGrubMkconfig && s.Verity != nil {
+		return fmt.Errorf("verity is not yet supported with grub2-mkconfig enabled images")
 	}
 
 	err = s.KernelCommandLine.IsValid()

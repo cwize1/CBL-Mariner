@@ -1,0 +1,16 @@
+SystemConfig:
+  EnableGrubMkconfig: true
+
+  KernelCommandLine:
+    SELinux: permissive
+    ExtraCommandLine: console=tty0 console=ttyS0
+
+  PackagesInstall:
+  # GRUB
+  - grub2
+  
+  # SELinux
+  - selinux-policy
+  - selinux-policy-modules
+  - setools-console
+  - policycoreutils-python-utils

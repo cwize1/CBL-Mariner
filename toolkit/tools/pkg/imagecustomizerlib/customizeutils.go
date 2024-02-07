@@ -43,6 +43,11 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
+	grubMkconfigEnabled, err := handleEnableGrubMkconfig(config.SystemConfig.EnableGrubMkconfig, imageChroot)
+	if err != nil {
+		return err
+	}
+
 	err = addRemoveAndUpdatePackages(buildDir, baseConfigPath, &config.SystemConfig, imageChroot, rpmsSources,
 		useBaseImageRpmRepos, partitionsCustomized)
 	if err != nil {
@@ -84,15 +89,24 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	err = handleKernelCommandLine(config.SystemConfig.KernelCommandLine.ExtraCommandLine, imageChroot,
-		partitionsCustomized)
+	err = handleKernelCommandLine(config.SystemConfig.KernelCommandLine.ExtraCommandLine, grubMkconfigEnabled,
+		imageChroot, partitionsCustomized)
 	if err != nil {
 		return fmt.Errorf("failed to add extra kernel command line: %w", err)
 	}
 
-	err = handleSELinux(config.SystemConfig.KernelCommandLine.SELinux, partitionsCustomized, imageChroot)
+	err = handleSELinux(config.SystemConfig.KernelCommandLine.SELinux, partitionsCustomized, grubMkconfigEnabled,
+		imageChroot)
 	if err != nil {
 		return err
+	}
+
+	if grubMkconfigEnabled {
+		// Run grub2-mkconfig to ensure the grub.cfg is up-to-date.
+		err = runGrubMkconfig(imageChroot)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = runScripts(baseConfigPath, config.SystemConfig.FinalizeImageScripts, imageChroot)
@@ -108,6 +122,40 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 	err = enableVerityPartition(config.SystemConfig.Verity, imageChroot)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func handleEnableGrubMkconfig(enableGrubMkconfigConfig *bool, imageChroot *safechroot.Chroot) (bool, error) {
+	grubMkConfigEnabled, err := isGrubMkconfigImage(imageChroot)
+	if err != nil {
+		return false, err
+	}
+
+	if enableGrubMkconfigConfig == nil || *enableGrubMkconfigConfig == grubMkConfigEnabled {
+		// Nothing to do.
+		return grubMkConfigEnabled, nil
+	}
+
+	enableGrubMkconfig := *enableGrubMkconfigConfig
+	if !enableGrubMkconfig {
+		return false, fmt.Errorf("cannot disable grub2-mkconfig")
+	}
+
+	// There isn't anything that needs to be done to enable grub2-mkconfig in the image, except for simply running
+	// grub2-mkconfig. And the grub2-mkconfig command will be run later on during customization. So, no need to run it
+	// again here.
+	return true, nil
+}
+
+func runGrubMkconfig(imageChroot *safechroot.Chroot) error {
+	logger.Log.Infof("Run grub2-mkconfig")
+
+	// Generate the grub.cfg file using grub2-mkconfig.
+	err := installutils.CallGrubMkconfig(imageChroot)
+	if err != nil {
+		return fmt.Errorf("failed to run grub2-mkconfig:\n%w", err)
 	}
 
 	return nil
@@ -401,7 +449,8 @@ func addCustomizerRelease(imageChroot *safechroot.Chroot, toolVersion string, bu
 	return nil
 }
 
-func handleSELinux(selinuxMode imagecustomizerapi.SELinux, partitionsCustomized bool, imageChroot *safechroot.Chroot,
+func handleSELinux(selinuxMode imagecustomizerapi.SELinux, partitionsCustomized bool, grubMkConfigImage bool,
+	imageChroot *safechroot.Chroot,
 ) error {
 	var err error
 
@@ -417,7 +466,7 @@ func handleSELinux(selinuxMode imagecustomizerapi.SELinux, partitionsCustomized 
 	// the SELinux args will already be correct and don't need to be updated.
 	if !partitionsCustomized {
 		// Update the SELinux kernel command-line args.
-		err := updateSELinuxCommandLine(selinuxMode, imageChroot)
+		err := updateSELinuxCommandLine(selinuxMode, grubMkConfigImage, imageChroot)
 		if err != nil {
 			return fmt.Errorf("failed to update SELinux args in grub.cfg:\n%w", err)
 		}
