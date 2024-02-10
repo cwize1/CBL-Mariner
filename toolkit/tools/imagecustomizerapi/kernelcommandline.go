@@ -12,7 +12,7 @@ type KernelCommandLine struct {
 	// SELinux specifies whether or not to enable SELinux on the image (and what mode SELinux should be in).
 	SELinux SELinux `yaml:"SELinux"`
 	// Extra kernel command line args.
-	ExtraCommandLine string `yaml:"ExtraCommandLine"`
+	ExtraCommandLine string `yaml:"extraCommandLine"`
 }
 
 func (s *KernelCommandLine) IsValid() error {
@@ -21,7 +21,7 @@ func (s *KernelCommandLine) IsValid() error {
 		return err
 	}
 
-	err = commandLineIsValid(s.ExtraCommandLine, "ExtraCommandLine")
+	err = commandLineIsValid(s.ExtraCommandLine, "extraCommandLine")
 	if err != nil {
 		return err
 	}

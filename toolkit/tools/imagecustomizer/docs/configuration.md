@@ -69,11 +69,11 @@ new package with [PackagesInstall](#packagesinstall-string).
 Example:
 
 ```yaml
-SystemConfig:
-  PackagesRemove:
+systemConfig:
+  packagesRemove:
   - kernel
 
-  PackagesInstall:
+  packagesInstall:
   - kernel-hci
 ```
 
@@ -99,31 +99,31 @@ While Disks is a list, only 1 disk is supported at the moment.
 Support for multiple disks may (or may not) be added in the future.
 
 ```yaml
-Disks:
-- PartitionTableType: gpt
-  MaxSize: 4096
-  Partitions:
-  - ID: esp
-    Flags:
+disks:
+- partitionTableType: gpt
+  maxSize: 4096
+  partitions:
+  - id: esp
+    flags:
     - esp
     - boot
-    Start: 1
-    End: 9
-    FsType: fat32
+    start: 1
+    end: 9
+    fsType: fat32
 
-  - ID: rootfs
-    Start: 9
-    FsType: ext4
+  - id: rootfs
+    start: 9
+    fsType: ext4
 
-SystemConfig:
-  BootType: efi
-  PartitionSettings:
-  - ID: esp
-    MountPoint: /boot/efi
-    MountOptions: umask=0077
+systemConfig:
+  bootType: efi
+  partitionSettings:
+  - id: esp
+    mountPoint: /boot/efi
+    mountOptions: umask=0077
 
-  - ID: rootfs
-    MountPoint: /
+  - id: rootfs
+    mountPoint: /
 ```
 
 ### SystemConfig [[SystemConfig](#systemconfig-type)]
@@ -133,8 +133,8 @@ Contains the configuration options for the OS.
 Example:
 
 ```yaml
-SystemConfig:
-  Hostname: example-image
+systemConfig:
+  hostname: example-image
 ```
 
 ## Disk type
@@ -173,7 +173,7 @@ Specifies the configuration for dm-verity root integrity verification.
   at each system boot.
 
   - IdType: Specifies the type of id for the partition. The options are
-    `PartLabel` (partition label), `Uuid` (filesystem UUID), and `PartUuid`
+    `partlabel` (partition label), `uuid` (filesystem UUID), and `partuuid`
     (partition UUID).
 
   - Id: The unique identifier value of the partition, corresponding to the
@@ -185,14 +185,14 @@ Specifies the configuration for dm-verity root integrity verification.
 Example:
 
 ```yaml
-SystemConfig:
-  Verity:
-    DataPartition:
-      IdType: PartUuid
-      Id: 00000000-0000-0000-0000-000000000000
-    HashPartition:
-      IdType: PartLabel
-      Id: hash_partition
+systemConfig:
+  verity:
+    dataPartition:
+      idType: partuuid
+      id: 00000000-0000-0000-0000-000000000000
+    hashPartition:
+      idType: partlabel
+      id: hash_partition
 ```
 
 ## FileConfig type
@@ -208,10 +208,10 @@ The absolute path of the destination file.
 Example:
 
 ```yaml
-SystemConfig:
-  AdditionalFiles:
+systemConfig:
+  additionalFiles:
     files/a.txt:
-    - Path: /a.txt
+    - path: /a.txt
 ```
 
 ### Permissions [string]
@@ -225,11 +225,11 @@ Supported formats:
 Example:
 
 ```yaml
-SystemConfig:
-  AdditionalFiles:
+systemConfig:
+  additionalFiles:
     files/a.txt:
-    - Path: /a.txt
-      Permissions: "664"
+    - path: /a.txt
+      permissions: "664"
 ```
 
 ## KernelCommandLine type
@@ -316,10 +316,10 @@ Options for configuring a kernel module.
 Name of the module.
 
 ```yaml
-SystemConfig:
-  Modules:
-    Load:
-    - Name: br_netfilter
+systemConfig:
+  modules:
+    load:
+    - name: br_netfilter
 ```
 
 ## Modules type
@@ -333,10 +333,10 @@ Sets kernel modules to be loaded automatically on boot.
 Implemented by adding an entry to `/etc/modules-load.d/`.
 
 ```yaml
-SystemConfig:
-  Modules:
-    Load:
-    - Name: br_netfilter
+systemConfig:
+  modules:
+    load:
+    - name: br_netfilter
 ```
 
 ### Disable [[Module](#module-type)[]]
@@ -346,10 +346,10 @@ Disable kernel modules from being loaded.
 Implemented by adding a "blacklist" entry to `/etc/modprobe.d/`.
 
 ```yaml
-SystemConfig:
-  Modules:
-    Disable:
-    - Name: mousedev
+systemConfig:
+  modules:
+    disable:
+    - name: mousedev
 ```
 
 ## PackageList type
@@ -370,7 +370,7 @@ Specifies a list of packages.
 Example:
 
 ```yaml
-Packages:
+packages:
 - openssh-server
 ```
 
@@ -508,9 +508,9 @@ in.
 Example:
 
 ```yaml
-SystemConfig:
-  PostInstallScripts:
-  - Path: scripts/a.sh
+systemConfig:
+  postInstallScripts:
+  - path: scripts/a.sh
 ```
 
 ### Args [string]
@@ -520,10 +520,10 @@ Additional arguments to pass to the script.
 Example:
 
 ```yaml
-SystemConfig:
-  PostInstallScripts:
-  - Path: scripts/a.sh
-    Args: abc
+systemConfig:
+  postInstallScripts:
+  - path: scripts/a.sh
+    args: abc
 ```
 
 ## Services type
@@ -538,9 +538,9 @@ That is, services that will be set to automatically run on OS boot.
 Example:
 
 ```yaml
-SystemConfig:
-  Services:
-    Enable:
+systemConfig:
+  services:
+    enable:
     - sshd
 ```
 
@@ -552,9 +552,9 @@ That is, services that will be set to not automatically run on OS boot.
 Example:
 
 ```yaml
-SystemConfig:
-  Services:
-    Disable:
+systemConfig:
+  services:
+    disable:
     - sshd
 ```
 
@@ -587,8 +587,8 @@ Implemented by writing to the `/etc/hostname` file.
 Example:
 
 ```yaml
-SystemConfig:
-  Hostname: example-image
+systemConfig:
+  hostname: example-image
 ```
 
 ### KernelCommandLine [[KernelCommandLine](#kernelcommandline-type)]
@@ -605,8 +605,8 @@ Implemented by calling: `tdnf update`
 Example:
 
 ```yaml
-SystemConfig:
-  UpdateBaseImagePackages: true
+systemConfig:
+  updateBaseImagePackages: true
 ```
 
 ### PackageListsInstall [string[]]
@@ -619,8 +619,8 @@ The other YAML file schema is specified by [PackageList](#packagelist-type).
 Example:
 
 ```yaml
-SystemConfig:
-  PackageListsRemove:
+systemConfig:
+  packageListsRemove:
   - lists/ssh.yaml
 ```
 
@@ -633,8 +633,8 @@ Implemented by calling: `tdnf install`.
 Example:
 
 ```yaml
-SystemConfig:
-  PackagesInstall:
+systemConfig:
+  packagesInstall:
   - openssh-server
 ```
 
@@ -648,8 +648,8 @@ The other YAML file schema is specified by [PackageList](#packagelist-type).
 Example:
 
 ```yaml
-SystemConfig:
-  PackageListsRemove:
+systemConfig:
+  packageListsRemove:
   - lists/ssh.yaml
 ```
 
@@ -662,8 +662,8 @@ Implemented by calling: `tdnf remove`
 Example:
 
 ```yaml
-SystemConfig:
-  PackagesRemove:
+systemConfig:
+  packagesRemove:
   - openssh-server
 ```
 
@@ -677,8 +677,8 @@ The other YAML file schema is specified by [PackageList](#packagelist-type).
 Example:
 
 ```yaml
-SystemConfig:
-  PackageListsUpdate:
+systemConfig:
+  packageListsUpdate:
   - lists/ssh.yaml
 ```
 
@@ -691,8 +691,8 @@ Implemented by calling: `tdnf update`
 Example:
 
 ```yaml
-SystemConfig:
-  PackagesUpdate:
+systemConfig:
+  packagesUpdate:
   - openssh-server
 ```
 
@@ -711,21 +711,21 @@ The destination files value can be one of:
 Example:
 
 ```yaml
-SystemConfig:
-  AdditionalFiles:
+systemConfig:
+  additionalFiles:
     # Single destination.
     files/a.txt: /a.txt
 
     # Single destinations with options.
     files/b.txt:
-      Path: /b.txt
-      Permissions: "664"
+      path: /b.txt
+      permissions: "664"
 
     # Multiple destinations.
     files/c.txt:
     - /c1.txt
-    - Path: /c2.txt
-      Permissions: "664"
+    - path: /c2.txt
+      permissions: "664"
 ```
 
 ### PartitionSettings [[PartitionSetting](#partitionsetting-type)[]]
@@ -741,9 +741,9 @@ These scripts are run under a chroot of the customized OS.
 Example:
 
 ```yaml
-SystemConfig:
-  PostInstallScripts:
-  - Path: scripts/a.sh
+systemConfig:
+  postInstallScripts:
+  - path: scripts/a.sh
 ```
 
 ### FinalizeImageScripts [[Script](#script-type)[]]
@@ -755,9 +755,9 @@ These scripts are run under a chroot of the customized OS.
 Example:
 
 ```yaml
-SystemConfig:
-  FinalizeImageScripts:
-  - Path: scripts/a.sh
+systemConfig:
+  finalizeImageScripts:
+  - path: scripts/a.sh
 ```
 
 ### Users [[User](#user-type)]
@@ -767,9 +767,9 @@ Used to add and/or update user accounts.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
+systemConfig:
+  users:
+  - name: test
 ```
 
 ### Services [[Services](#services-type)]
@@ -777,9 +777,9 @@ SystemConfig:
 Options for configuring systemd services.
 
 ```yaml
-SystemConfig:
-  Services:
-    Enable:
+systemConfig:
+  services:
+    enable:
     - sshd
 ```
 
@@ -802,9 +802,9 @@ The name of the user.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
+systemConfig:
+  users:
+  - name: test
 ```
 
 ### UID [int]
@@ -817,10 +817,10 @@ Valid range: 0-60000
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    UID: 1000
+systemConfig:
+  users:
+  - name: test
+    uid: 1000
 ```
 
 ### PasswordHashed [bool]
@@ -834,15 +834,15 @@ When set to true, specifies that the password provided by either `Password` or
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
+systemConfig:
+  users:
+  - name: test
     # Generated by:
     #   PASSWORD="password"
     #   SALT=$(tr -dc "A-Za-z0-9" < /dev/urandom 2> /dev/null | head -c 12)
     #   openssl passwd -6 -salt "$SALT" "$PASSWORD"
-    Password: "$6$XH9YwqAMPohT$YQ0fqon.KOXz9AfjP5LE6VHifnNcsIgxmeX/iM5VF1GpFJTOpnTY.UGVRA.Xb8gYdVFqkYnnpJwlaIU1LhNHB/"
-    PasswordHashed: true
+    password: "$6$XH9YwqAMPohT$YQ0fqon.KOXz9AfjP5LE6VHifnNcsIgxmeX/iM5VF1GpFJTOpnTY.UGVRA.Xb8gYdVFqkYnnpJwlaIU1LhNHB/"
+    passwordHashed: true
 ```
 
 Note: Modern GPUs have gotten incredibly good at brute forcing hashed passwords.
@@ -859,10 +859,10 @@ Use of this property is strongly discouraged, except when debugging.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    Password: testpassword
+systemConfig:
+  users:
+  - name: test
+    password: testpassword
 ```
 
 ### PasswordPath [string]
@@ -873,10 +873,10 @@ The password is read from the file path specified.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    PasswordPath: test-password.txt
+systemConfig:
+  users:
+  - name: test
+    passwordPath: test-password.txt
 ```
 
 ### PasswordExpiresDays [int]
@@ -888,12 +888,12 @@ Valid range: 0-99999. Set to -1 to remove expiry.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    PasswordPath: test-password.txt
-    PasswordHashed: true
-    PasswordExpiresDays: 120
+systemConfig:
+  users:
+  - name: test
+    passwordPath: test-password.txt
+    passwordHashed: true
+    passwordExpiresDays: 120
 ```
 
 ### SSHPubKeyPaths [string[]]
@@ -904,10 +904,10 @@ These public keys will be copied into the user's `~/.ssh/authorized_keys` file.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    SSHPubKeyPaths:
+systemConfig:
+  users:
+  - name: test
+    sshPubKeyPaths:
     - id_ed25519.pub
 ```
 
@@ -918,10 +918,10 @@ The primary group of the user.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    PrimaryGroup: testgroup
+systemConfig:
+  users:
+  - name: test
+    primaryGroup: testgroup
 ```
 
 ### SecondaryGroups [string[]]
@@ -931,10 +931,10 @@ Additional groups to assign to the user.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    SecondaryGroups:
+systemConfig:
+  users:
+  - name: test
+    secondaryGroups:
     - sudo
 ```
 
@@ -945,8 +945,8 @@ The command run when the user logs in.
 Example:
 
 ```yaml
-SystemConfig:
-  Users:
-  - Name: test
-    StartupCommand: /sbin/nologin
+systemConfig:
+  users:
+  - name: test
+    startupCommand: /sbin/nologin
 ```

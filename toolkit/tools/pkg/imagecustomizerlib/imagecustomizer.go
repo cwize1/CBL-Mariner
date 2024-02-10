@@ -276,14 +276,14 @@ func validateSystemConfig(baseConfigPath string, config *imagecustomizerapi.Syst
 	for i, script := range config.PostInstallScripts {
 		err = validateScript(baseConfigPath, &script)
 		if err != nil {
-			return fmt.Errorf("invalid PostInstallScripts item at index %d: %w", i, err)
+			return fmt.Errorf("invalid postInstallScripts item at index %d: %w", i, err)
 		}
 	}
 
 	for i, script := range config.FinalizeImageScripts {
 		err = validateScript(baseConfigPath, &script)
 		if err != nil {
-			return fmt.Errorf("invalid FinalizeImageScripts item at index %d: %w", i, err)
+			return fmt.Errorf("invalid finalizeImageScripts item at index %d: %w", i, err)
 		}
 	}
 

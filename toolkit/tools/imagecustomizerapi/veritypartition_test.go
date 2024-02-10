@@ -11,7 +11,7 @@ import (
 
 func TestVerityPartitionIsValidValidPartUuidFormat(t *testing.T) {
 	correctUuidPartition := VerityPartition{
-		IdType: "PartUuid",
+		IdType: "partuuid",
 		Id:     "123e4567-e89b-4d3a-a456-426614174000",
 	}
 
@@ -21,7 +21,7 @@ func TestVerityPartitionIsValidValidPartUuidFormat(t *testing.T) {
 
 func TestVerityPartitionIsValidValidPartLabel(t *testing.T) {
 	validPartition := VerityPartition{
-		IdType: "PartLabel",
+		IdType: "partlabel",
 		Id:     "ValidLabelName",
 	}
 
@@ -31,33 +31,33 @@ func TestVerityPartitionIsValidValidPartLabel(t *testing.T) {
 
 func TestVerityPartitionIsValidInvalidPartLabel(t *testing.T) {
 	invalidPartition := VerityPartition{
-		IdType: "PartLabel",
+		IdType: "partlabel",
 		Id:     "",
 	}
 
 	err := invalidPartition.IsValid()
 	assert.Error(t, err)
-	assert.ErrorContains(t, err, "invalid Id: empty string")
+	assert.ErrorContains(t, err, "invalid id: empty string")
 }
 
 func TestVerityPartitionIsValidInvalidEmptyPartUuid(t *testing.T) {
 	emptyIdPartition := VerityPartition{
-		IdType: "PartUuid",
+		IdType: "partuuid",
 		Id:     "",
 	}
 
 	err := emptyIdPartition.IsValid()
 	assert.Error(t, err)
-	assert.ErrorContains(t, err, "invalid Id: empty string")
+	assert.ErrorContains(t, err, "invalid id: empty string")
 }
 
 func TestVerityPartitionIsValidInvalidPartUuidFormat(t *testing.T) {
 	incorrectUuidPartition := VerityPartition{
-		IdType: "PartUuid",
+		IdType: "partuuid",
 		Id:     "incorrect-uuid-format",
 	}
 
 	err := incorrectUuidPartition.IsValid()
 	assert.Error(t, err)
-	assert.ErrorContains(t, err, "invalid Id format")
+	assert.ErrorContains(t, err, "invalid id format")
 }
