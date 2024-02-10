@@ -116,11 +116,11 @@ func partitionFlagToImager(flag imagecustomizerapi.PartitionFlag) (configuration
 	}
 }
 
-func partitionSettingsToImager(partitionSettings []imagecustomizerapi.PartitionSetting,
+func mountPointsToImager(mountPoints []imagecustomizerapi.MountPoint,
 ) ([]configuration.PartitionSetting, error) {
 	imagerPartitionSettings := []configuration.PartitionSetting(nil)
-	for _, partitionSetting := range partitionSettings {
-		imagerPartitionSetting, err := partitionSettingToImager(partitionSetting)
+	for _, mountPoint := range mountPoints {
+		imagerPartitionSetting, err := mountPointToImager(mountPoint)
 		if err != nil {
 			return nil, err
 		}
@@ -129,18 +129,18 @@ func partitionSettingsToImager(partitionSettings []imagecustomizerapi.PartitionS
 	return imagerPartitionSettings, nil
 }
 
-func partitionSettingToImager(partitionSettings imagecustomizerapi.PartitionSetting,
+func mountPointToImager(mountPoint imagecustomizerapi.MountPoint,
 ) (configuration.PartitionSetting, error) {
-	imagerMountIdentifierType, err := mountIdentifierTypeToImager(partitionSettings.MountIdentifier)
+	imagerMountIdentifierType, err := mountIdentifierTypeToImager(mountPoint.MountIdentifier)
 	if err != nil {
 		return configuration.PartitionSetting{}, err
 	}
 
 	imagerPartitionSetting := configuration.PartitionSetting{
-		ID:              partitionSettings.ID,
+		ID:              mountPoint.ID,
 		MountIdentifier: imagerMountIdentifierType,
-		MountOptions:    partitionSettings.MountOptions,
-		MountPoint:      partitionSettings.MountPoint,
+		MountOptions:    mountPoint.Options,
+		MountPoint:      mountPoint.Path,
 	}
 	return imagerPartitionSetting, nil
 }

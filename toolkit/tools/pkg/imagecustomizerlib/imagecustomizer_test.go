@@ -295,16 +295,16 @@ func createFakeEfiImage(buildDir string) (string, error) {
 		},
 	}
 
-	partitionSettings := []imagecustomizerapi.PartitionSetting{
+	mountPoints := []imagecustomizerapi.MountPoint{
 		{
 			ID:              "boot",
-			MountPoint:      "/boot/efi",
-			MountOptions:    "umask=0077",
+			Path:            "/boot/efi",
+			Options:         "umask=0077",
 			MountIdentifier: imagecustomizerapi.MountIdentifierTypeDefault,
 		},
 		{
 			ID:              "rootfs",
-			MountPoint:      "/",
+			Path:            "/",
 			MountIdentifier: imagecustomizerapi.MountIdentifierTypeDefault,
 		},
 	}
@@ -318,7 +318,7 @@ func createFakeEfiImage(buildDir string) (string, error) {
 		return nil
 	}
 
-	err = createNewImage(rawDisk, diskConfig, partitionSettings, "efi",
+	err = createNewImage(rawDisk, diskConfig, mountPoints, "efi",
 		imagecustomizerapi.KernelCommandLine{}, buildDir, testImageRootDirName, imagecustomizerapi.SELinuxDisabled,
 		installOS)
 	if err != nil {

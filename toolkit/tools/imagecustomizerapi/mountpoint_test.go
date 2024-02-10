@@ -10,12 +10,12 @@ import (
 )
 
 func TestPartitionIsValidInvalidMountIdentifier(t *testing.T) {
-	partition := PartitionSetting{
+	mountPoint := MountPoint{
 		ID:              "a",
 		MountIdentifier: "bad",
 	}
 
-	err := partition.IsValid()
+	err := mountPoint.IsValid()
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "invalid")
 	assert.ErrorContains(t, err, "mountIdentifierType")

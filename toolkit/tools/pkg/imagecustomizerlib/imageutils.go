@@ -57,11 +57,11 @@ func connectToExistingImageHelper(imageConnection *ImageConnection, imageFilePat
 }
 
 func createNewImage(filename string, diskConfig imagecustomizerapi.Disk,
-	partitionSettings []imagecustomizerapi.PartitionSetting, bootType imagecustomizerapi.BootType,
+	mountPoints []imagecustomizerapi.MountPoint, bootType imagecustomizerapi.BootType,
 	kernelCommandLine imagecustomizerapi.KernelCommandLine, buildDir string, chrootDirName string,
 	currentSELinuxMode imagecustomizerapi.SELinux, installOS installOSFunc,
 ) error {
-	err := createNewImageHelper(filename, diskConfig, partitionSettings, bootType, kernelCommandLine,
+	err := createNewImageHelper(filename, diskConfig, mountPoints, bootType, kernelCommandLine,
 		buildDir, chrootDirName, currentSELinuxMode, installOS,
 	)
 	if err != nil {
@@ -72,7 +72,7 @@ func createNewImage(filename string, diskConfig imagecustomizerapi.Disk,
 }
 
 func createNewImageHelper(filename string, diskConfig imagecustomizerapi.Disk,
-	partitionSettings []imagecustomizerapi.PartitionSetting, bootType imagecustomizerapi.BootType,
+	mountPoints []imagecustomizerapi.MountPoint, bootType imagecustomizerapi.BootType,
 	kernelCommandLine imagecustomizerapi.KernelCommandLine, buildDir string, chrootDirName string,
 	currentSELinuxMode imagecustomizerapi.SELinux, installOS installOSFunc,
 ) error {
@@ -90,7 +90,7 @@ func createNewImageHelper(filename string, diskConfig imagecustomizerapi.Disk,
 		return err
 	}
 
-	imagerPartitionSettings, err := partitionSettingsToImager(partitionSettings)
+	imagerPartitionSettings, err := mountPointsToImager(mountPoints)
 	if err != nil {
 		return err
 	}

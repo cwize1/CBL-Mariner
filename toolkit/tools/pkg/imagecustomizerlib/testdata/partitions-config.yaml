@@ -26,7 +26,7 @@ disks:
 
 systemConfig:
   bootType: efi
-  partitionSettings:
+  mountPoints:
   - id: esp
     mountPoint: /boot/efi
     mountOptions: umask=0077

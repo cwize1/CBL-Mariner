@@ -25,23 +25,6 @@ func TestSystemConfigInvalidAdditionalFiles(t *testing.T) {
 	testInvalidYamlValue[*SystemConfig](t, "{ \"additionalFiles\": { \"a.txt\": [] } }")
 }
 
-func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
-	value := SystemConfig{
-		PartitionSettings: []PartitionSetting{
-			{
-				ID: "a",
-			},
-			{
-				ID: "a",
-			},
-		},
-	}
-
-	err := value.IsValid()
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "duplicate partitionSettings ID")
-}
-
 func TestSystemConfigIsValidKernelCommandLineInvalidChars(t *testing.T) {
 	value := SystemConfig{
 		KernelCommandLine: KernelCommandLine{

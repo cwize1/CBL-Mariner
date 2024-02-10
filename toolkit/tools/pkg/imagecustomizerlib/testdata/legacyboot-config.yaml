@@ -15,7 +15,7 @@ disks:
 
 systemConfig:
   bootType: legacy
-  partitionSettings:
+  mountPoints:
   - id: boot
 
   - id: rootfs
