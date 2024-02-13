@@ -14,6 +14,7 @@ import (
 type OSConfig struct {
 	Hostname             string             `yaml:"hostname"`
 	Packages             Packages           `yaml:"packages"`
+	SELinux              SELinux            `yaml:"selinux"`
 	KernelCommandLine    KernelCommandLine  `yaml:"kernelCommandLine"`
 	AdditionalFiles      AdditionalFilesMap `yaml:"additionalFiles"`
 	PostInstallScripts   []Script           `yaml:"postInstallScripts"`
@@ -31,6 +32,11 @@ func (s *OSConfig) IsValid() error {
 		if !govalidator.IsDNSName(s.Hostname) || strings.Contains(s.Hostname, "_") {
 			return fmt.Errorf("invalid hostname: %s", s.Hostname)
 		}
+	}
+
+	err = s.SELinux.IsValid()
+	if err != nil {
+		return fmt.Errorf("invalid selinux: %w", err)
 	}
 
 	err = s.KernelCommandLine.IsValid()

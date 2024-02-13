@@ -1,6 +1,6 @@
 osConfig:
-  kernelCommandLine:
-    seLinuxMode: force-enforcing
+  seLinux:
+    mode: force-enforcing
 
   packages:
     install:

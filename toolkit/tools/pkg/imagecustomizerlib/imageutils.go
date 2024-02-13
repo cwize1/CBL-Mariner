@@ -58,10 +58,10 @@ func connectToExistingImageHelper(imageConnection *ImageConnection, imageFilePat
 
 func createNewImage(filename string, diskConfig imagecustomizerapi.Disk,
 	mountPoints []imagecustomizerapi.MountPoint, bootType imagecustomizerapi.BootType,
-	kernelCommandLine imagecustomizerapi.KernelCommandLine, buildDir string, chrootDirName string,
-	currentSELinuxMode imagecustomizerapi.SELinuxMode, installOS installOSFunc,
+	kernelCommandLine imagecustomizerapi.KernelCommandLine, selinux imagecustomizerapi.SELinux, buildDir string,
+	chrootDirName string, currentSELinuxMode imagecustomizerapi.SELinuxMode, installOS installOSFunc,
 ) error {
-	err := createNewImageHelper(filename, diskConfig, mountPoints, bootType, kernelCommandLine,
+	err := createNewImageHelper(filename, diskConfig, mountPoints, bootType, kernelCommandLine, selinux,
 		buildDir, chrootDirName, currentSELinuxMode, installOS,
 	)
 	if err != nil {
@@ -73,8 +73,8 @@ func createNewImage(filename string, diskConfig imagecustomizerapi.Disk,
 
 func createNewImageHelper(filename string, diskConfig imagecustomizerapi.Disk,
 	mountPoints []imagecustomizerapi.MountPoint, bootType imagecustomizerapi.BootType,
-	kernelCommandLine imagecustomizerapi.KernelCommandLine, buildDir string, chrootDirName string,
-	currentSELinuxMode imagecustomizerapi.SELinuxMode, installOS installOSFunc,
+	kernelCommandLine imagecustomizerapi.KernelCommandLine, selinux imagecustomizerapi.SELinux, buildDir string,
+	chrootDirName string, currentSELinuxMode imagecustomizerapi.SELinuxMode, installOS installOSFunc,
 ) error {
 	imageConnection := NewImageConnection()
 	defer imageConnection.Close()
@@ -95,7 +95,7 @@ func createNewImageHelper(filename string, diskConfig imagecustomizerapi.Disk,
 		return err
 	}
 
-	imagerKernelCommandLine, err := kernelCommandLineToImager(kernelCommandLine, currentSELinuxMode)
+	imagerKernelCommandLine, err := kernelCommandLineToImager(kernelCommandLine, selinux, currentSELinuxMode)
 	if err != nil {
 		return err
 	}

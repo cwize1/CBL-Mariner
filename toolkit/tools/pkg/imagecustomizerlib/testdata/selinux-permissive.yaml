@@ -1,6 +1,6 @@
 osConfig:
-  kernelCommandLine:
-    seLinuxMode: permissive
+  seLinux:
+    mode: permissive
 
   packages:
     install:

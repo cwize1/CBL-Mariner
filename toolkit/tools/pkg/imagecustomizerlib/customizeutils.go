@@ -90,7 +90,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return fmt.Errorf("failed to add extra kernel command line: %w", err)
 	}
 
-	err = handleSELinux(config.OSConfig.KernelCommandLine.SELinuxMode, partitionsCustomized, imageChroot)
+	err = handleSELinux(config.OSConfig.SELinux.Mode, partitionsCustomized, imageChroot)
 	if err != nil {
 		return err
 	}
