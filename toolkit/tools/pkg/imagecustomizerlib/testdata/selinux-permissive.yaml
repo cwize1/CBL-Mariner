@@ -1,6 +1,6 @@
-SystemConfig:
-  KernelCommandLine:
-    SELinux: permissive
+osConfig:
+  kernelCommandLine:
+    seLinuxMode: permissive
 
   packages:
     install:

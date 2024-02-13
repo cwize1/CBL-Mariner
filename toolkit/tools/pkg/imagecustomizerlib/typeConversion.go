@@ -163,9 +163,9 @@ func mountIdentifierTypeToImager(mountIdentifierType imagecustomizerapi.MountIde
 }
 
 func kernelCommandLineToImager(kernelCommandLine imagecustomizerapi.KernelCommandLine,
-	currentSELinuxMode imagecustomizerapi.SELinux,
+	currentSELinuxMode imagecustomizerapi.SELinuxMode,
 ) (configuration.KernelCommandLine, error) {
-	imagerSELinux, err := selinuxModeMaybeDefaultToImager(kernelCommandLine.SELinux, currentSELinuxMode)
+	imagerSELinux, err := selinuxModeMaybeDefaultToImager(kernelCommandLine.SELinuxMode, currentSELinuxMode)
 	if err != nil {
 		return configuration.KernelCommandLine{}, err
 	}
@@ -178,28 +178,28 @@ func kernelCommandLineToImager(kernelCommandLine imagecustomizerapi.KernelComman
 	return imagerKernelCommandLine, nil
 }
 
-func selinuxModeMaybeDefaultToImager(selinuxMode imagecustomizerapi.SELinux,
-	currentSELinuxMode imagecustomizerapi.SELinux,
+func selinuxModeMaybeDefaultToImager(selinuxMode imagecustomizerapi.SELinuxMode,
+	currentSELinuxMode imagecustomizerapi.SELinuxMode,
 ) (configuration.SELinux, error) {
-	if selinuxMode == imagecustomizerapi.SELinuxDefault {
+	if selinuxMode == imagecustomizerapi.SELinuxModeDefault {
 		selinuxMode = currentSELinuxMode
 	}
 
 	return selinuxModeToImager(selinuxMode)
 }
 
-func selinuxModeToImager(selinuxMode imagecustomizerapi.SELinux) (configuration.SELinux, error) {
+func selinuxModeToImager(selinuxMode imagecustomizerapi.SELinuxMode) (configuration.SELinux, error) {
 	switch selinuxMode {
-	case imagecustomizerapi.SELinuxDisabled:
+	case imagecustomizerapi.SELinuxModeDisabled:
 		return configuration.SELinuxOff, nil
 
-	case imagecustomizerapi.SELinuxEnforcing:
+	case imagecustomizerapi.SELinuxModeEnforcing:
 		return configuration.SELinuxEnforcing, nil
 
-	case imagecustomizerapi.SELinuxPermissive:
+	case imagecustomizerapi.SELinuxModePermissive:
 		return configuration.SELinuxPermissive, nil
 
-	case imagecustomizerapi.SELinuxForceEnforcing:
+	case imagecustomizerapi.SELinuxModeForceEnforcing:
 		return configuration.SELinuxForceEnforcing, nil
 
 	default:

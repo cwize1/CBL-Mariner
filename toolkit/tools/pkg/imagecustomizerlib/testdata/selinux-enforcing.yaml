@@ -1,6 +1,6 @@
-SystemConfig:
-  KernelCommandLine:
-    SELinux: enforcing
+osConfig:
+  kernelCommandLine:
+    seLinuxMode: enforcing
 
   packages:
     install:

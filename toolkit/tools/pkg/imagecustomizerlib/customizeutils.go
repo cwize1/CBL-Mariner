@@ -90,7 +90,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return fmt.Errorf("failed to add extra kernel command line: %w", err)
 	}
 
-	err = handleSELinux(config.OSConfig.KernelCommandLine.SELinux, partitionsCustomized, imageChroot)
+	err = handleSELinux(config.OSConfig.KernelCommandLine.SELinuxMode, partitionsCustomized, imageChroot)
 	if err != nil {
 		return err
 	}
@@ -402,12 +402,12 @@ func addCustomizerRelease(imageChroot *safechroot.Chroot, toolVersion string, bu
 	return nil
 }
 
-func handleSELinux(selinuxMode imagecustomizerapi.SELinux, partitionsCustomized bool, imageChroot *safechroot.Chroot,
+func handleSELinux(selinuxMode imagecustomizerapi.SELinuxMode, partitionsCustomized bool, imageChroot *safechroot.Chroot,
 ) error {
 	var err error
 
 	// Resolve the default SELinux mode.
-	if selinuxMode == imagecustomizerapi.SELinuxDefault {
+	if selinuxMode == imagecustomizerapi.SELinuxModeDefault {
 		selinuxMode, err = getCurrentSELinuxMode(imageChroot)
 		if err != nil {
 			return err
@@ -424,7 +424,7 @@ func handleSELinux(selinuxMode imagecustomizerapi.SELinux, partitionsCustomized 
 		}
 	}
 
-	if selinuxMode != imagecustomizerapi.SELinuxDisabled {
+	if selinuxMode != imagecustomizerapi.SELinuxModeDisabled {
 		err = updateSELinuxMode(selinuxMode, imageChroot)
 		if err != nil {
 			return err
@@ -434,7 +434,7 @@ func handleSELinux(selinuxMode imagecustomizerapi.SELinux, partitionsCustomized 
 	return nil
 }
 
-func updateSELinuxMode(selinuxMode imagecustomizerapi.SELinux, imageChroot *safechroot.Chroot) error {
+func updateSELinuxMode(selinuxMode imagecustomizerapi.SELinuxMode, imageChroot *safechroot.Chroot) error {
 	imagerSELinuxMode, err := selinuxModeToImager(selinuxMode)
 	if err != nil {
 		return err
