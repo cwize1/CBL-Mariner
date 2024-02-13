@@ -96,7 +96,7 @@ func TestPartitionIsValidGoodName(t *testing.T) {
 		FsType: "ext4",
 		Start:  0,
 		End:    nil,
-		Name:   "a",
+		Label:  "a",
 	}
 
 	err := partition.IsValid()
@@ -109,7 +109,7 @@ func TestPartitionIsValidNameTooLong(t *testing.T) {
 		FsType: "ext4",
 		Start:  0,
 		End:    nil,
-		Name:   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		Label:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 	}
 
 	err := partition.IsValid()
@@ -124,7 +124,7 @@ func TestPartitionIsValidNameNonASCII(t *testing.T) {
 		FsType: "ext4",
 		Start:  0,
 		End:    nil,
-		Name:   "❤️",
+		Label:  "❤️",
 	}
 
 	err := partition.IsValid()

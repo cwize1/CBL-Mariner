@@ -78,7 +78,7 @@ func partitionToImager(partition imagecustomizerapi.Partition) (configuration.Pa
 	imagerPartition := configuration.Partition{
 		ID:     partition.ID,
 		FsType: string(partition.FsType),
-		Name:   partition.Name,
+		Name:   partition.Label,
 		Start:  partition.Start,
 		End:    imagerEnd,
 		Flags:  imagerFlags,

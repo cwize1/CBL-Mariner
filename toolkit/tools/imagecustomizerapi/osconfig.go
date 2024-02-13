@@ -10,7 +10,7 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
-// OSConfig defines how each system present on the image is supposed to be configured.
+// OSConfig defines how the OS is supposed to be configured.
 type OSConfig struct {
 	Hostname             string             `yaml:"hostname"`
 	Packages             Packages           `yaml:"packages"`

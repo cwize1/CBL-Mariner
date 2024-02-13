@@ -15,8 +15,8 @@ type Partition struct {
 	ID string `yaml:"id"`
 	// FsType is the type of file system to use on the partition.
 	FsType FileSystemType `yaml:"fsType"`
-	// Name is the label to assign to the partition.
-	Name string `yaml:"name"`
+	// Label is the file system label to assign to the partition.
+	Label string `yaml:"label"`
 	// Start is the offset where the partition begins (inclusive), in MiBs.
 	Start uint64 `yaml:"start"`
 	// End is the offset where the partition ends (exclusive), in MiBs.
@@ -33,7 +33,7 @@ func (p *Partition) IsValid() error {
 		return fmt.Errorf("invalid partition (%s) FsType value:\n%w", p.ID, err)
 	}
 
-	err = isGPTNameValid(p.Name)
+	err = isGPTNameValid(p.Label)
 	if err != nil {
 		return err
 	}
