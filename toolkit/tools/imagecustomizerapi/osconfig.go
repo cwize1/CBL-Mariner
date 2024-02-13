@@ -12,22 +12,16 @@ import (
 
 // OSConfig defines how each system present on the image is supposed to be configured.
 type OSConfig struct {
-	Hostname                string             `yaml:"hostname"`
-	UpdateBaseImagePackages bool               `yaml:"updateBaseImagePackages"`
-	PackageListsInstall     []string           `yaml:"packageListsInstall"`
-	PackagesInstall         []string           `yaml:"packagesInstall"`
-	PackageListsRemove      []string           `yaml:"packageListsRemove"`
-	PackagesRemove          []string           `yaml:"packagesRemove"`
-	PackageListsUpdate      []string           `yaml:"packageListsUpdate"`
-	PackagesUpdate          []string           `yaml:"packagesUpdate"`
-	KernelCommandLine       KernelCommandLine  `yaml:"kernelCommandLine"`
-	AdditionalFiles         AdditionalFilesMap `yaml:"additionalFiles"`
-	PostInstallScripts      []Script           `yaml:"postInstallScripts"`
-	FinalizeImageScripts    []Script           `yaml:"finalizeImageScripts"`
-	Users                   []User             `yaml:"users"`
-	Services                Services           `yaml:"services"`
-	Modules                 Modules            `yaml:"modules"`
-	Verity                  *Verity            `yaml:"verity"`
+	Hostname             string             `yaml:"hostname"`
+	Packages             Packages           `yaml:"packages"`
+	KernelCommandLine    KernelCommandLine  `yaml:"kernelCommandLine"`
+	AdditionalFiles      AdditionalFilesMap `yaml:"additionalFiles"`
+	PostInstallScripts   []Script           `yaml:"postInstallScripts"`
+	FinalizeImageScripts []Script           `yaml:"finalizeImageScripts"`
+	Users                []User             `yaml:"users"`
+	Services             Services           `yaml:"services"`
+	Modules              Modules            `yaml:"modules"`
+	Verity               *Verity            `yaml:"verity"`
 }
 
 func (s *OSConfig) IsValid() error {
