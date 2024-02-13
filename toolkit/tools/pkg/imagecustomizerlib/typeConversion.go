@@ -131,7 +131,7 @@ func mountPointsToImager(mountPoints []imagecustomizerapi.MountPoint,
 
 func mountPointToImager(mountPoint imagecustomizerapi.MountPoint,
 ) (configuration.PartitionSetting, error) {
-	imagerMountIdentifierType, err := mountIdentifierTypeToImager(mountPoint.MountIdentifier)
+	imagerMountIdentifierType, err := mountIdentifierTypeToImager(mountPoint.MountIdentifierType)
 	if err != nil {
 		return configuration.PartitionSetting{}, err
 	}

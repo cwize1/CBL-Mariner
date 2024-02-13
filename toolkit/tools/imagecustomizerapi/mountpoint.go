@@ -10,15 +10,15 @@ import (
 
 // MountPoint holds the mounting information for each partition.
 type MountPoint struct {
-	ID              string              `yaml:"id"`
-	MountIdentifier MountIdentifierType `yaml:"mountIdentifier"`
-	Options         string              `yaml:"options"`
-	Path            string              `yaml:"path"`
+	ID                  string              `yaml:"id"`
+	MountIdentifierType MountIdentifierType `yaml:"mountIdentifierType"`
+	Options             string              `yaml:"options"`
+	Path                string              `yaml:"path"`
 }
 
 // IsValid returns an error if the PartitionSetting is not valid
 func (p *MountPoint) IsValid() error {
-	err := p.MountIdentifier.IsValid()
+	err := p.MountIdentifierType.IsValid()
 	if err != nil {
 		return err
 	}

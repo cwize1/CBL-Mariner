@@ -11,8 +11,8 @@ import (
 
 func TestPartitionIsValidInvalidMountIdentifier(t *testing.T) {
 	mountPoint := MountPoint{
-		ID:              "a",
-		MountIdentifier: "bad",
+		ID:                  "a",
+		MountIdentifierType: "bad",
 	}
 
 	err := mountPoint.IsValid()

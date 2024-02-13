@@ -297,15 +297,15 @@ func createFakeEfiImage(buildDir string) (string, error) {
 
 	mountPoints := []imagecustomizerapi.MountPoint{
 		{
-			ID:              "boot",
-			Path:            "/boot/efi",
-			Options:         "umask=0077",
-			MountIdentifier: imagecustomizerapi.MountIdentifierTypeDefault,
+			ID:                  "boot",
+			Path:                "/boot/efi",
+			Options:             "umask=0077",
+			MountIdentifierType: imagecustomizerapi.MountIdentifierTypeDefault,
 		},
 		{
-			ID:              "rootfs",
-			Path:            "/",
-			MountIdentifier: imagecustomizerapi.MountIdentifierTypeDefault,
+			ID:                  "rootfs",
+			Path:                "/",
+			MountIdentifierType: imagecustomizerapi.MountIdentifierTypeDefault,
 		},
 	}
 
