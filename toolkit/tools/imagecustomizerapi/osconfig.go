@@ -10,8 +10,8 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
-// SystemConfig defines how each system present on the image is supposed to be configured.
-type SystemConfig struct {
+// OSConfig defines how each system present on the image is supposed to be configured.
+type OSConfig struct {
 	Hostname                string             `yaml:"hostname"`
 	UpdateBaseImagePackages bool               `yaml:"updateBaseImagePackages"`
 	PackageListsInstall     []string           `yaml:"packageListsInstall"`
@@ -30,7 +30,7 @@ type SystemConfig struct {
 	Verity                  *Verity            `yaml:"verity"`
 }
 
-func (s *SystemConfig) IsValid() error {
+func (s *OSConfig) IsValid() error {
 	var err error
 
 	if s.Hostname != "" {

@@ -10,23 +10,23 @@ import (
 )
 
 func TestSystemConfigValidEmpty(t *testing.T) {
-	testValidYamlValue[*SystemConfig](t, "{ }", &SystemConfig{})
+	testValidYamlValue[*OSConfig](t, "{ }", &OSConfig{})
 }
 
 func TestSystemConfigValidHostname(t *testing.T) {
-	testValidYamlValue[*SystemConfig](t, "{ \"hostname\": \"validhostname\" }", &SystemConfig{Hostname: "validhostname"})
+	testValidYamlValue[*OSConfig](t, "{ \"hostname\": \"validhostname\" }", &OSConfig{Hostname: "validhostname"})
 }
 
 func TestSystemConfigInvalidHostname(t *testing.T) {
-	testInvalidYamlValue[*SystemConfig](t, "{ \"hostname\": \"invalid_hostname\" }")
+	testInvalidYamlValue[*OSConfig](t, "{ \"hostname\": \"invalid_hostname\" }")
 }
 
 func TestSystemConfigInvalidAdditionalFiles(t *testing.T) {
-	testInvalidYamlValue[*SystemConfig](t, "{ \"additionalFiles\": { \"a.txt\": [] } }")
+	testInvalidYamlValue[*OSConfig](t, "{ \"additionalFiles\": { \"a.txt\": [] } }")
 }
 
 func TestSystemConfigIsValidKernelCommandLineInvalidChars(t *testing.T) {
-	value := SystemConfig{
+	value := OSConfig{
 		KernelCommandLine: KernelCommandLine{
 			ExtraCommandLine: "example=\"example\"",
 		},
@@ -38,7 +38,7 @@ func TestSystemConfigIsValidKernelCommandLineInvalidChars(t *testing.T) {
 }
 
 func TestSystemConfigIsValidVerityInValidPartUuid(t *testing.T) {
-	invalidVerity := SystemConfig{
+	invalidVerity := OSConfig{
 		Verity: &Verity{
 			DataPartition: VerityPartition{
 				IdType: "partuuid",

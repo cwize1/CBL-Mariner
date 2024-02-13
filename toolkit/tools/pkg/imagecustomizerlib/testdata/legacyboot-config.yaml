@@ -13,7 +13,7 @@ disks:
     start: 9
     fsType: ext4
 
-systemConfig:
+osConfig:
   bootType: legacy
   mountPoints:
   - id: boot

@@ -147,7 +147,7 @@ func CustomizeImage(buildDir string, baseConfigPath string, config *imagecustomi
 		}
 	}
 
-	if config.SystemConfig.Verity != nil {
+	if config.OSConfig.Verity != nil {
 		// Customize image for dm-verity, setting up verity metadata and security features.
 		err = customizeVerityImageHelper(buildDirAbs, baseConfigPath, config, rawImageFile, rpmsSources, useBaseImageRpmRepos)
 		if err != nil {
@@ -216,7 +216,7 @@ func validateConfig(baseConfigPath string, config *imagecustomizerapi.Config, rp
 		return err
 	}
 
-	err = validateSystemConfig(baseConfigPath, &config.SystemConfig, rpmsSources, useBaseImageRpmRepos,
+	err = validateOSConfig(baseConfigPath, &config.OSConfig, rpmsSources, useBaseImageRpmRepos,
 		partitionsCustomized)
 	if err != nil {
 		return err
@@ -258,7 +258,7 @@ func validateIsoConfig(baseConfigPath string, config *imagecustomizerapi.Iso) er
 	return nil
 }
 
-func validateSystemConfig(baseConfigPath string, config *imagecustomizerapi.SystemConfig,
+func validateOSConfig(baseConfigPath string, config *imagecustomizerapi.OSConfig,
 	rpmsSources []string, useBaseImageRpmRepos bool, partitionsCustomized bool,
 ) error {
 	var err error
@@ -313,7 +313,7 @@ func validateScript(baseConfigPath string, script *imagecustomizerapi.Script) er
 	return nil
 }
 
-func validatePackageLists(baseConfigPath string, config *imagecustomizerapi.SystemConfig, rpmsSources []string,
+func validatePackageLists(baseConfigPath string, config *imagecustomizerapi.OSConfig, rpmsSources []string,
 	useBaseImageRpmRepos bool, partitionsCustomized bool,
 ) error {
 	allPackagesRemove, err := collectPackagesList(baseConfigPath, config.PackageListsRemove, config.PackagesRemove)
@@ -450,11 +450,11 @@ func customizeVerityImageHelper(buildDir string, baseConfigPath string, config *
 	}
 
 	// Extract the partition block device path.
-	dataPartition, err := idToPartitionBlockDevicePath(config.SystemConfig.Verity.DataPartition.IdType, config.SystemConfig.Verity.DataPartition.Id, nbdDevice, diskPartitions)
+	dataPartition, err := idToPartitionBlockDevicePath(config.OSConfig.Verity.DataPartition.IdType, config.OSConfig.Verity.DataPartition.Id, nbdDevice, diskPartitions)
 	if err != nil {
 		return err
 	}
-	hashPartition, err := idToPartitionBlockDevicePath(config.SystemConfig.Verity.HashPartition.IdType, config.SystemConfig.Verity.HashPartition.Id, nbdDevice, diskPartitions)
+	hashPartition, err := idToPartitionBlockDevicePath(config.OSConfig.Verity.HashPartition.IdType, config.OSConfig.Verity.HashPartition.Id, nbdDevice, diskPartitions)
 	if err != nil {
 		return err
 	}
@@ -500,8 +500,8 @@ func customizeVerityImageHelper(buildDir string, baseConfigPath string, config *
 		return fmt.Errorf("failed to stat file (%s):\n%w", grubCfgFullPath, err)
 	}
 
-	err = updateGrubConfig(config.SystemConfig.Verity.DataPartition.IdType, config.SystemConfig.Verity.DataPartition.Id,
-		config.SystemConfig.Verity.HashPartition.IdType, config.SystemConfig.Verity.HashPartition.Id, rootHash, grubCfgFullPath)
+	err = updateGrubConfig(config.OSConfig.Verity.DataPartition.IdType, config.OSConfig.Verity.DataPartition.Id,
+		config.OSConfig.Verity.HashPartition.IdType, config.OSConfig.Verity.HashPartition.Id, rootHash, grubCfgFullPath)
 	if err != nil {
 		return err
 	}

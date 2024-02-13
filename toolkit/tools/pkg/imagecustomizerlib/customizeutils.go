@@ -43,33 +43,33 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	err = addRemoveAndUpdatePackages(buildDir, baseConfigPath, &config.SystemConfig, imageChroot, rpmsSources,
+	err = addRemoveAndUpdatePackages(buildDir, baseConfigPath, &config.OSConfig, imageChroot, rpmsSources,
 		useBaseImageRpmRepos, partitionsCustomized)
 	if err != nil {
 		return err
 	}
 
-	err = updateHostname(config.SystemConfig.Hostname, imageChroot)
+	err = updateHostname(config.OSConfig.Hostname, imageChroot)
 	if err != nil {
 		return err
 	}
 
-	err = copyAdditionalFiles(baseConfigPath, config.SystemConfig.AdditionalFiles, imageChroot)
+	err = copyAdditionalFiles(baseConfigPath, config.OSConfig.AdditionalFiles, imageChroot)
 	if err != nil {
 		return err
 	}
 
-	err = AddOrUpdateUsers(config.SystemConfig.Users, baseConfigPath, imageChroot)
+	err = AddOrUpdateUsers(config.OSConfig.Users, baseConfigPath, imageChroot)
 	if err != nil {
 		return err
 	}
 
-	err = enableOrDisableServices(config.SystemConfig.Services, imageChroot)
+	err = enableOrDisableServices(config.OSConfig.Services, imageChroot)
 	if err != nil {
 		return err
 	}
 
-	err = loadOrDisableModules(config.SystemConfig.Modules, imageChroot)
+	err = loadOrDisableModules(config.OSConfig.Modules, imageChroot)
 	if err != nil {
 		return err
 	}
@@ -79,23 +79,23 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	err = runScripts(baseConfigPath, config.SystemConfig.PostInstallScripts, imageChroot)
+	err = runScripts(baseConfigPath, config.OSConfig.PostInstallScripts, imageChroot)
 	if err != nil {
 		return err
 	}
 
-	err = handleKernelCommandLine(config.SystemConfig.KernelCommandLine.ExtraCommandLine, imageChroot,
+	err = handleKernelCommandLine(config.OSConfig.KernelCommandLine.ExtraCommandLine, imageChroot,
 		partitionsCustomized)
 	if err != nil {
 		return fmt.Errorf("failed to add extra kernel command line: %w", err)
 	}
 
-	err = handleSELinux(config.SystemConfig.KernelCommandLine.SELinux, partitionsCustomized, imageChroot)
+	err = handleSELinux(config.OSConfig.KernelCommandLine.SELinux, partitionsCustomized, imageChroot)
 	if err != nil {
 		return err
 	}
 
-	err = runScripts(baseConfigPath, config.SystemConfig.FinalizeImageScripts, imageChroot)
+	err = runScripts(baseConfigPath, config.OSConfig.FinalizeImageScripts, imageChroot)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	err = enableVerityPartition(config.SystemConfig.Verity, imageChroot)
+	err = enableVerityPartition(config.OSConfig.Verity, imageChroot)
 	if err != nil {
 		return err
 	}
