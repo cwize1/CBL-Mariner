@@ -24,7 +24,7 @@ disks:
     start: 2048
     fsType: xfs
 
-osConfig:
+os:
   bootType: efi
   mountPoints:
   - id: esp

@@ -33,7 +33,7 @@ func customizePartitionsUsingFileCopy(buildDir string, baseConfigPath string, co
 	}
 
 	err = createNewImage(newBuildImageFile, diskConfig, config.Storage.MountPoints,
-		config.Storage.BootType, config.OSConfig.KernelCommandLine, config.OSConfig.SELinux, buildDir, "newimageroot",
+		config.Storage.BootType, config.OS.KernelCommandLine, config.OS.SELinux, buildDir, "newimageroot",
 		currentSELinuxMode, installOSFunc)
 	if err != nil {
 		return err

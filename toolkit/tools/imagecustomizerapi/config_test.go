@@ -35,7 +35,7 @@ func TestConfigIsValid(t *testing.T) {
 				},
 			},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -63,7 +63,7 @@ func TestConfigIsValidLegacy(t *testing.T) {
 			}},
 			BootType: "legacy",
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -92,7 +92,7 @@ func TestConfigIsValidNoBootType(t *testing.T) {
 				},
 			},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -116,7 +116,7 @@ func TestConfigIsValidMultipleDisks(t *testing.T) {
 				},
 			},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -131,7 +131,7 @@ func TestConfigIsValidZeroDisks(t *testing.T) {
 		Storage: &Storage{
 			Disks: []Disk{},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -143,7 +143,7 @@ func TestConfigIsValidZeroDisks(t *testing.T) {
 
 func TestConfigIsValidBadHostname(t *testing.T) {
 	config := &Config{
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test_",
 		},
 	}
@@ -161,7 +161,7 @@ func TestConfigIsValidBadDisk(t *testing.T) {
 				MaxSize:            0,
 			}},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -182,7 +182,7 @@ func TestConfigIsValidMissingEsp(t *testing.T) {
 			}},
 			BootType: "efi",
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -204,7 +204,7 @@ func TestConfigIsValidMissingBiosBoot(t *testing.T) {
 			}},
 			BootType: "legacy",
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -241,7 +241,7 @@ func TestConfigIsValidInvalidMountPoint(t *testing.T) {
 				},
 			},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -277,7 +277,7 @@ func TestConfigIsValidInvalidPartitionId(t *testing.T) {
 				},
 			},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 		},
 	}
@@ -314,7 +314,7 @@ func TestConfigIsValidKernelCLI(t *testing.T) {
 				},
 			},
 		},
-		OSConfig: OSConfig{
+		OS: OS{
 			Hostname: "test",
 			KernelCommandLine: KernelCommandLine{
 				ExtraCommandLine: "console=ttyS0",

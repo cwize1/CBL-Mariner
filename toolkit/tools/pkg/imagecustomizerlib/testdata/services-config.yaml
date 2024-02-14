@@ -1,4 +1,4 @@
-osConfig:
+os:
   services:
     enable:
       - name: console-getty

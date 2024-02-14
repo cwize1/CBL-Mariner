@@ -11,7 +11,7 @@ import (
 )
 
 // OSConfig defines how the OS is supposed to be configured.
-type OSConfig struct {
+type OS struct {
 	Hostname             string             `yaml:"hostname"`
 	Packages             Packages           `yaml:"packages"`
 	SELinux              SELinux            `yaml:"selinux"`
@@ -25,7 +25,7 @@ type OSConfig struct {
 	Verity               *Verity            `yaml:"verity"`
 }
 
-func (s *OSConfig) IsValid() error {
+func (s *OS) IsValid() error {
 	var err error
 
 	if s.Hostname != "" {

@@ -1,3 +1,3 @@
-osConfig:
+os:
   seLinux:
     mode: disabled

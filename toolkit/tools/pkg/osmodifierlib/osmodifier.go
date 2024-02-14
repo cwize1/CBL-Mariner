@@ -13,7 +13,7 @@ import (
 func ModifyOSWithConfigFile(configFile string) error {
 	var err error
 
-	var osConfig imagecustomizerapi.OSConfig
+	var osConfig imagecustomizerapi.OS
 	err = imagecustomizerapi.UnmarshalYamlFile(configFile, &osConfig)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func ModifyOSWithConfigFile(configFile string) error {
 	return nil
 }
 
-func ModifyOS(baseConfigPath string, osConfig *imagecustomizerapi.OSConfig) error {
+func ModifyOS(baseConfigPath string, osConfig *imagecustomizerapi.OS) error {
 	err := doModifications(baseConfigPath, osConfig)
 	if err != nil {
 		return err

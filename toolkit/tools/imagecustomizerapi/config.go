@@ -8,9 +8,9 @@ import (
 )
 
 type Config struct {
-	Storage  *Storage `yaml:"storage"`
-	Iso      *Iso     `yaml:"iso"`
-	OSConfig OSConfig `yaml:"osConfig"`
+	Storage *Storage `yaml:"storage"`
+	Iso     *Iso     `yaml:"iso"`
+	OS      OS       `yaml:"os"`
 }
 
 func (c *Config) IsValid() (err error) {
@@ -28,7 +28,7 @@ func (c *Config) IsValid() (err error) {
 		}
 	}
 
-	err = c.OSConfig.IsValid()
+	err = c.OS.IsValid()
 	if err != nil {
 		return err
 	}

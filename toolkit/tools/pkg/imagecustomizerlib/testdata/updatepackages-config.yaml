@@ -1,4 +1,4 @@
-osConfig:
+os:
   packages:
     updateExistingPackages: true
 
