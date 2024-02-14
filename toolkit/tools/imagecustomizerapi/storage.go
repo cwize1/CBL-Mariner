@@ -38,31 +38,56 @@ func (s *Storage) IsValid() (err error) {
 		return err
 	}
 
-	// Verify the partition settings are valid.
-	partitionIDSet := make(map[string]bool)
-	for i, partition := range s.MountPoints {
-		err = partition.IsValid()
+	partitionSet := make(map[string]Partition)
+	for _, disk := range disks {
+		for _, partition := range disk.Partitions {
+			if _, existingName := partitionSet[partition.ID]; existingName {
+				return fmt.Errorf("duplicate partition ID (%s)", partition.ID)
+			}
+
+			partitionSet[partition.ID] = partition
+		}
+	}
+
+	// Verify the mount point settings are valid.
+	mountPointIDSet := make(map[string]MountPoint)
+	for i, mountPoint := range s.MountPoints {
+		err = mountPoint.IsValid()
 		if err != nil {
 			return fmt.Errorf("invalid mountPoints item at index %d: %w", i, err)
 		}
 
-		if _, existingName := partitionIDSet[partition.ID]; existingName {
-			return fmt.Errorf("duplicate mountPoints ID used (%s) at index %d", partition.ID, i)
+		// Ensure ID is unique.
+		if _, existingName := mountPointIDSet[mountPoint.ID]; existingName {
+			return fmt.Errorf("duplicate mountPoints ID used (%s) at index %d", mountPoint.ID, i)
 		}
 
-		partitionIDSet[partition.ID] = false // dummy value
-	}
+		mountPointIDSet[mountPoint.ID] = mountPoint
 
-	// Ensure all the partition settings object have an equivalent partition object.
-	for i, mountPoint := range s.MountPoints {
-		diskExists := sliceutils.ContainsFunc(s.Disks, func(disk Disk) bool {
-			return sliceutils.ContainsFunc(disk.Partitions, func(partition Partition) bool {
-				return partition.ID == mountPoint.ID
-			})
-		})
-		if !diskExists {
+		// Ensure there is a partition with the same ID.
+		_, foundPartition := partitionSet[mountPoint.ID]
+		if !foundPartition {
 			return fmt.Errorf("invalid mount point at index %d:\nno partition with matching ID (%s)", i,
 				mountPoint.ID)
+		}
+	}
+
+	// Ensure special partitions have the correct filesystem type.
+	for _, disk := range disks {
+		for _, partition := range disk.Partitions {
+			mountPoint, hasMountPoint := mountPointIDSet[partition.ID]
+
+			if partition.IsBiosBoot() {
+				if !hasMountPoint || mountPoint.FilesystemType != FileSystemTypeFat32 {
+					return fmt.Errorf("ESP partition must have 'fat32' filesystem type")
+				}
+			}
+
+			if partition.IsESP() {
+				if !hasMountPoint || mountPoint.FilesystemType != FileSystemTypeFat32 {
+					return fmt.Errorf("BIOS boot partition must have 'fat32' filesystem type")
+				}
+			}
 		}
 	}
 
@@ -71,7 +96,7 @@ func (s *Storage) IsValid() (err error) {
 	case BootTypeEfi:
 		hasEsp := sliceutils.ContainsFunc(s.Disks, func(disk Disk) bool {
 			return sliceutils.ContainsFunc(disk.Partitions, func(partition Partition) bool {
-				return sliceutils.ContainsValue(partition.Flags, PartitionFlagESP)
+				return partition.IsESP()
 			})
 		})
 		if !hasEsp {
@@ -81,7 +106,7 @@ func (s *Storage) IsValid() (err error) {
 	case BootTypeLegacy:
 		hasBiosBoot := sliceutils.ContainsFunc(s.Disks, func(disk Disk) bool {
 			return sliceutils.ContainsFunc(disk.Partitions, func(partition Partition) bool {
-				return sliceutils.ContainsValue(partition.Flags, PartitionFlagBiosGrub)
+				return partition.IsBiosBoot()
 			})
 		})
 		if !hasBiosBoot {

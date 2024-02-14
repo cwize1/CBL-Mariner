@@ -10,15 +10,26 @@ import (
 
 // MountPoint holds the mounting information for each partition.
 type MountPoint struct {
-	ID                  string              `yaml:"id"`
+	// ID is used to correlate `Partition` objects with `MountPoint` objects.
+	ID string `yaml:"id"`
+	// FilesystemType is the type of file system to use on the partition.
+	FilesystemType FileSystemType `yaml:"fsType"`
+	// MountIdentifierType is how the source block device is referenced.
 	MountIdentifierType MountIdentifierType `yaml:"mountIdentifierType"`
-	Options             string              `yaml:"options"`
-	Path                string              `yaml:"path"`
+	// Options is the extra options for the mount.
+	Options string `yaml:"options"`
+	// Path is the target directory for the mount.
+	Path string `yaml:"path"`
 }
 
 // IsValid returns an error if the PartitionSetting is not valid
 func (p *MountPoint) IsValid() error {
-	err := p.MountIdentifierType.IsValid()
+	err := p.FilesystemType.IsValid()
+	if err != nil {
+		return fmt.Errorf("invalid MountPoint (%s) FilesystemType value:\n%w", p.ID, err)
+	}
+
+	err = p.MountIdentifierType.IsValid()
 	if err != nil {
 		return err
 	}

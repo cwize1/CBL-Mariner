@@ -17,9 +17,8 @@ func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:     "a",
-						FsType: "ext4",
-						Start:  1,
+						ID:    "a",
+						Start: 1,
 					},
 				},
 			},
@@ -27,10 +26,12 @@ func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
 		BootType: "efi",
 		MountPoints: []MountPoint{
 			{
-				ID: "a",
+				ID:             "a",
+				FilesystemType: "ext4",
 			},
 			{
-				ID: "a",
+				ID:             "a",
+				FilesystemType: "ext4",
 			},
 		},
 	}
