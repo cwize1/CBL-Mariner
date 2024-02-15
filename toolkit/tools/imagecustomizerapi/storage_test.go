@@ -17,9 +17,9 @@ func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:     "a",
-						FsType: "ext4",
-						Start:  1,
+						ID:             "a",
+						FileSystemType: "ext4",
+						Start:          1,
 					},
 				},
 			},
