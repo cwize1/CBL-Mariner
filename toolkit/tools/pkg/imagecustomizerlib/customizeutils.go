@@ -313,14 +313,14 @@ func addOrUpdateUser(user imagecustomizerapi.User, baseConfigPath string, imageC
 	}
 
 	// Set user's SSH keys.
-	for i, _ := range user.SSHPubKeyPaths {
+	for i := range user.SSHPublicKeyPaths {
 		// If absolute path is not provided, then append baseConfigPath.
-		if !filepath.IsAbs(user.SSHPubKeyPaths[i]) {
-			user.SSHPubKeyPaths[i] = filepath.Join(baseConfigPath, user.SSHPubKeyPaths[i])
+		if !filepath.IsAbs(user.SSHPublicKeyPaths[i]) {
+			user.SSHPublicKeyPaths[i] = filepath.Join(baseConfigPath, user.SSHPublicKeyPaths[i])
 		}
 	}
 
-	err = installutils.ProvisionUserSSHCerts(imageChroot, user.Name, user.SSHPubKeyPaths, user.SSHPubKeys)
+	err = installutils.ProvisionUserSSHCerts(imageChroot, user.Name, user.SSHPublicKeyPaths, user.SSHPublicKeys)
 	if err != nil {
 		return err
 	}
