@@ -10,7 +10,7 @@ import (
 
 // MountPoint holds the mounting information for each partition.
 type MountPoint struct {
-	ID                  string              `yaml:"id"`
+	DeviceId            string              `yaml:"deviceId"`
 	MountIdentifierType MountIdentifierType `yaml:"mountIdentifierType"`
 	Options             string              `yaml:"options"`
 	Path                string              `yaml:"path"`

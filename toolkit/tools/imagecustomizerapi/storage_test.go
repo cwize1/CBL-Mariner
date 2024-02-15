@@ -27,10 +27,10 @@ func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
 		BootType: "efi",
 		MountPoints: []MountPoint{
 			{
-				ID: "a",
+				DeviceId: "a",
 			},
 			{
-				ID: "a",
+				DeviceId: "a",
 			},
 		},
 	}

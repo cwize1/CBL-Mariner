@@ -11,7 +11,7 @@ import (
 
 func TestPartitionIsValidInvalidMountIdentifier(t *testing.T) {
 	mountPoint := MountPoint{
-		ID:                  "a",
+		DeviceId:            "a",
 		MountIdentifierType: "bad",
 	}
 

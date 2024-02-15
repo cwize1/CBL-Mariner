@@ -46,23 +46,23 @@ func (s *Storage) IsValid() (err error) {
 			return fmt.Errorf("invalid mountPoints item at index %d: %w", i, err)
 		}
 
-		if _, existingName := partitionIDSet[partition.ID]; existingName {
-			return fmt.Errorf("duplicate mountPoints ID used (%s) at index %d", partition.ID, i)
+		if _, existingName := partitionIDSet[partition.DeviceId]; existingName {
+			return fmt.Errorf("duplicate mountPoints deviceId used (%s) at index %d", partition.DeviceId, i)
 		}
 
-		partitionIDSet[partition.ID] = false // dummy value
+		partitionIDSet[partition.DeviceId] = false // dummy value
 	}
 
 	// Ensure all the partition settings object have an equivalent partition object.
 	for i, mountPoint := range s.MountPoints {
 		diskExists := sliceutils.ContainsFunc(s.Disks, func(disk Disk) bool {
 			return sliceutils.ContainsFunc(disk.Partitions, func(partition Partition) bool {
-				return partition.ID == mountPoint.ID
+				return partition.ID == mountPoint.DeviceId
 			})
 		})
 		if !diskExists {
 			return fmt.Errorf("invalid mount point at index %d:\nno partition with matching ID (%s)", i,
-				mountPoint.ID)
+				mountPoint.DeviceId)
 		}
 	}
 

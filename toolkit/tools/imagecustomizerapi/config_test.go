@@ -30,8 +30,8 @@ func TestConfigIsValid(t *testing.T) {
 			BootType: "efi",
 			MountPoints: []MountPoint{
 				{
-					ID:   "esp",
-					Path: "/boot/efi",
+					DeviceId: "esp",
+					Path:     "/boot/efi",
 				},
 			},
 		},
@@ -88,7 +88,7 @@ func TestConfigIsValidNoBootType(t *testing.T) {
 			}},
 			MountPoints: []MountPoint{
 				{
-					ID: "a",
+					DeviceId: "a",
 				},
 			},
 		},
@@ -236,8 +236,8 @@ func TestConfigIsValidInvalidMountPoint(t *testing.T) {
 			BootType: "efi",
 			MountPoints: []MountPoint{
 				{
-					ID:   "esp",
-					Path: "boot/efi",
+					DeviceId: "esp",
+					Path:     "boot/efi",
 				},
 			},
 		},
@@ -272,8 +272,8 @@ func TestConfigIsValidInvalidPartitionId(t *testing.T) {
 			BootType: "efi",
 			MountPoints: []MountPoint{
 				{
-					ID:   "boot",
-					Path: "/boot/efi",
+					DeviceId: "boot",
+					Path:     "/boot/efi",
 				},
 			},
 		},
@@ -309,8 +309,8 @@ func TestConfigIsValidKernelCLI(t *testing.T) {
 			BootType: "efi",
 			MountPoints: []MountPoint{
 				{
-					ID:   "esp",
-					Path: "/boot/efi",
+					DeviceId: "esp",
+					Path:     "/boot/efi",
 				},
 			},
 		},
