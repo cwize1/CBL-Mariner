@@ -242,10 +242,15 @@ func addOrUpdateUser(user imagecustomizerapi.User, baseConfigPath string, imageC
 
 	logger.Log.Infof("Adding/updating user (%s)", user.Name)
 
-	password := user.Password
-	if user.PasswordPath != "" {
-		// Read password from file.
-		passwordFullPath := filepath.Join(baseConfigPath, user.PasswordPath)
+	password := ""
+	switch user.Password.Type {
+	case imagecustomizerapi.PasswordTypePlainText, imagecustomizerapi.PasswordTypeHashed:
+		// Use the value provided.
+		password = user.Password.Value
+
+	case imagecustomizerapi.PasswordTypePlainTextFile, imagecustomizerapi.PasswordTypeHashedFile:
+		// Read the password from the specified file.
+		passwordFullPath := filepath.Join(baseConfigPath, user.Password.Value)
 
 		passwordFileContents, err := os.ReadFile(passwordFullPath)
 		if err != nil {
@@ -257,7 +262,8 @@ func addOrUpdateUser(user imagecustomizerapi.User, baseConfigPath string, imageC
 
 	// Hash the password.
 	hashedPassword := password
-	if !user.PasswordHashed {
+	switch user.Password.Type {
+	case imagecustomizerapi.PasswordTypePlainText, imagecustomizerapi.PasswordTypePlainTextFile:
 		hashedPassword, err = userutils.HashPassword(password)
 		if err != nil {
 			return err
@@ -271,10 +277,13 @@ func addOrUpdateUser(user imagecustomizerapi.User, baseConfigPath string, imageC
 	}
 
 	if userExists {
-		// Update the user's password.
-		err = userutils.UpdateUserPassword(imageChroot.RootDir(), user.Name, hashedPassword)
-		if err != nil {
-			return err
+		// Check if a password value was explictly set.
+		if user.Password.Type != imagecustomizerapi.PasswordTypeDefault {
+			// Update the user's password.
+			err = userutils.UpdateUserPassword(imageChroot.RootDir(), user.Name, hashedPassword)
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		var uidStr string

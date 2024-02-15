@@ -12,9 +12,7 @@ import (
 type User struct {
 	Name                string   `yaml:"name"`
 	UID                 *int     `yaml:"uid"`
-	PasswordHashed      bool     `yaml:"passwordHashed"`
-	Password            string   `yaml:"password"`
-	PasswordPath        string   `yaml:"passwordPath"`
+	Password            Password `yaml:"password"`
 	PasswordExpiresDays *int64   `yaml:"passwordExpiresDays"`
 	SSHPubKeyPaths      []string `yaml:"sshPubKeyPaths"`
 	SSHPubKeys          []string `yaml:"sshPubKeys"`
@@ -34,10 +32,6 @@ func (u *User) IsValid() error {
 		if err != nil {
 			return fmt.Errorf("user (%s) is invalid:\n%w", u.Name, err)
 		}
-	}
-
-	if u.Password != "" && u.PasswordPath != "" {
-		return fmt.Errorf("user (%s) is invalid:\nfields Password and PasswordPath must not both be specified", u.Name)
 	}
 
 	if u.PasswordExpiresDays != nil {
