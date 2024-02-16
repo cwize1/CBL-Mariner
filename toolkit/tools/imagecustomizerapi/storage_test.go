@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
+func TestStorageIsValidDuplicatePartitionID(t *testing.T) {
 	value := Storage{
 		Disks: []Disk{
 			{
@@ -17,9 +17,8 @@ func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:             "a",
-						FileSystemType: "ext4",
-						Start:          1,
+						ID:    "a",
+						Start: 1,
 					},
 				},
 			},
@@ -27,15 +26,77 @@ func TestSystemConfigIsValidDuplicatePartitionID(t *testing.T) {
 		BootType: "efi",
 		MountPoints: []MountPoint{
 			{
-				DeviceId: "a",
+				DeviceId:       "a",
+				FileSystemType: "ext4",
 			},
 			{
-				DeviceId: "a",
+				DeviceId:       "a",
+				FileSystemType: "ext4",
 			},
 		},
 	}
 
 	err := value.IsValid()
 	assert.Error(t, err)
-	assert.ErrorContains(t, err, "duplicate mountPoints ID")
+	assert.ErrorContains(t, err, "duplicate mountPoints deviceId")
+}
+
+func TestStorageIsValidBadEspFsType(t *testing.T) {
+	value := Storage{
+		Disks: []Disk{
+			{
+				PartitionTableType: PartitionTableTypeGpt,
+				MaxSize:            2,
+				Partitions: []Partition{
+					{
+						ID:    "a",
+						Start: 1,
+						Flags: []PartitionFlag{"esp", "boot"},
+					},
+				},
+			},
+		},
+		BootType: "efi",
+		MountPoints: []MountPoint{
+			{
+				DeviceId:       "a",
+				FileSystemType: "ext4",
+			},
+		},
+	}
+
+	err := value.IsValid()
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "ESP")
+	assert.ErrorContains(t, err, "fat32")
+}
+
+func TestStorageIsValidBadBiosBootFsType(t *testing.T) {
+	value := Storage{
+		Disks: []Disk{
+			{
+				PartitionTableType: PartitionTableTypeGpt,
+				MaxSize:            2,
+				Partitions: []Partition{
+					{
+						ID:    "a",
+						Start: 1,
+						Flags: []PartitionFlag{"bios_grub"},
+					},
+				},
+			},
+		},
+		BootType: "legacy",
+		MountPoints: []MountPoint{
+			{
+				DeviceId:       "a",
+				FileSystemType: "ext4",
+			},
+		},
+	}
+
+	err := value.IsValid()
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "BIOS boot")
+	assert.ErrorContains(t, err, "fat32")
 }

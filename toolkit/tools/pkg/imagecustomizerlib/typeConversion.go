@@ -8,6 +8,7 @@ import (
 
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/CBL-Mariner/toolkit/tools/imagegen/configuration"
+	"github.com/microsoft/CBL-Mariner/toolkit/tools/internal/sliceutils"
 )
 
 func bootTypeToImager(bootType imagecustomizerapi.BootType) (string, error) {
@@ -23,13 +24,14 @@ func bootTypeToImager(bootType imagecustomizerapi.BootType) (string, error) {
 	}
 }
 
-func diskConfigToImager(diskConfig imagecustomizerapi.Disk) (configuration.Disk, error) {
+func diskConfigToImager(diskConfig imagecustomizerapi.Disk, mountPoints []imagecustomizerapi.MountPoint,
+) (configuration.Disk, error) {
 	imagerPartitionTableType, err := partitionTableTypeToImager(diskConfig.PartitionTableType)
 	if err != nil {
 		return configuration.Disk{}, err
 	}
 
-	imagerPartitions, err := partitionsToImager(diskConfig.Partitions)
+	imagerPartitions, err := partitionsToImager(diskConfig.Partitions, mountPoints)
 	if err != nil {
 		return configuration.Disk{}, err
 	}
@@ -53,10 +55,10 @@ func partitionTableTypeToImager(partitionTableType imagecustomizerapi.PartitionT
 	}
 }
 
-func partitionsToImager(partitions []imagecustomizerapi.Partition) ([]configuration.Partition, error) {
+func partitionsToImager(partitions []imagecustomizerapi.Partition, mountPoints []imagecustomizerapi.MountPoint) ([]configuration.Partition, error) {
 	imagerPartitions := []configuration.Partition(nil)
 	for _, partition := range partitions {
-		imagerPartition, err := partitionToImager(partition)
+		imagerPartition, err := partitionToImager(partition, mountPoints)
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +69,15 @@ func partitionsToImager(partitions []imagecustomizerapi.Partition) ([]configurat
 	return imagerPartitions, nil
 }
 
-func partitionToImager(partition imagecustomizerapi.Partition) (configuration.Partition, error) {
+func partitionToImager(partition imagecustomizerapi.Partition, mountPoints []imagecustomizerapi.MountPoint,
+) (configuration.Partition, error) {
+	mountPoint, foundMountPoint := sliceutils.FindValueFunc(mountPoints, func(mountPoint imagecustomizerapi.MountPoint) bool {
+		return mountPoint.DeviceId == partition.ID
+	})
+	if !foundMountPoint {
+		return configuration.Partition{}, fmt.Errorf("failed to find mount point with ID (%s)", partition.ID)
+	}
+
 	imagerEnd, _ := partition.GetEnd()
 
 	imagerFlags, err := partitionFlagsToImager(partition.Flags)
@@ -77,7 +87,7 @@ func partitionToImager(partition imagecustomizerapi.Partition) (configuration.Pa
 
 	imagerPartition := configuration.Partition{
 		ID:     partition.ID,
-		FsType: string(partition.FileSystemType),
+		FsType: string(mountPoint.FileSystemType),
 		Name:   partition.Label,
 		Start:  partition.Start,
 		End:    imagerEnd,

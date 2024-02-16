@@ -85,7 +85,7 @@ func createNewImageHelper(filename string, diskConfig imagecustomizerapi.Disk,
 		return err
 	}
 
-	imagerDiskConfig, err := diskConfigToImager(diskConfig)
+	imagerDiskConfig, err := diskConfigToImager(diskConfig, mountPoints)
 	if err != nil {
 		return err
 	}

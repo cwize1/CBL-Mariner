@@ -9,9 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPartitionIsValidInvalidMountIdentifier(t *testing.T) {
+func TestMountPointIsValidInvalidMountIdentifier(t *testing.T) {
 	mountPoint := MountPoint{
 		DeviceId:            "a",
+		FileSystemType:      "fat32",
 		MountIdentifierType: "bad",
 	}
 
@@ -19,4 +20,16 @@ func TestPartitionIsValidInvalidMountIdentifier(t *testing.T) {
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "invalid")
 	assert.ErrorContains(t, err, "mountIdentifierType")
+}
+
+func TestMountPointIsValidUnsupportedFileSystem(t *testing.T) {
+	mountPoint := MountPoint{
+		DeviceId:       "a",
+		FileSystemType: "bad",
+	}
+
+	err := mountPoint.IsValid()
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "invalid")
+	assert.ErrorContains(t, err, "fileSystemType")
 }
