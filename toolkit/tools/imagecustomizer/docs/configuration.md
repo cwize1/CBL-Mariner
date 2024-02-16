@@ -4,12 +4,13 @@ The Mariner Image Customizer is configured using a YAML (or JSON) file.
 
 ### Operation ordering
 
-1. If partitions were specified in the config, customize the disk partitions and reset
-   the boot-loader.
+1. If partitions were specified in the config, customize the disk partitions.
 
 2. Override the `/etc/resolv.conf` file with the version from the host OS.
 
-3. Update packages:
+3. Run pre OS customization scripts.
+
+4. Update packages:
 
    1. Remove packages ([PackageListsRemove](#packagelistsremove-string),
    [PackagesRemove](#packagesremove-string))
@@ -22,33 +23,36 @@ The Mariner Image Customizer is configured using a YAML (or JSON) file.
    4. Update packages ([PackageListsUpdate](#packagelistsupdate-string),
    [PackagesUpdate](#packagesupdate-string))
 
-4. Update hostname. ([Hostname](#hostname-string))
+5. Update hostname. ([Hostname](#hostname-string))
 
-5. Copy additional files. ([AdditionalFiles](#additionalfiles-mapstring-fileconfig))
+6. Copy additional files. ([AdditionalFiles](#additionalfiles-mapstring-fileconfig))
 
-6. Add/update users. ([Users](#users-user))
+7. Add/update users. ([Users](#users-user))
 
-7. Enable/disable services. ([Services](#services-type))
+8. Enable/disable services. ([Services](#services-type))
 
-8. Configure kernel modules. ([Modules](#modules-type))
+9. Configure kernel modules. ([Modules](#modules-type))
 
-9. Write the `/etc/mariner-customizer-release` file.
+10. If dm-verity is enabled, install dm-verity initramfs modules.
 
-10. Run post-install scripts. ([PostInstallScripts](#postinstallscripts-script))
+11. Write the `/etc/mariner-customizer-release` file.
 
-11. Apply kernel command-line args, if the partitions weren't customized.
+12. If partitions were customized, reset bootloader. Otherwise, append extra kernel
+    command-line args.
 
-12. Change SELinux mode and, if SELinux is enabled, call `setfiles`.
+13. Update SELinux mode.
 
-13. Run finalize image scripts. ([FinalizeImageScripts](#finalizeimagescripts-script))
+14. Run post OS customization scripts.
 
-14. Delete `/etc/resolv.conf` file.
+15. If SELinux is enabled, call `setfiles`.
 
-15. Enable dm-verity root protection.
+16. Delete `/etc/resolv.conf` file.
 
-And if the output format is set to `iso`:
+17. Run finalize customization scripts.
 
-12. Copy additional iso media files ([Iso](#iso-type)).
+18. Enable dm-verity root protection.
+
+19. If the output format is set to `iso`, copy additional iso media files ([Iso](#iso-type)).
 
 ### /etc/resolv.conf
 
