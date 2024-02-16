@@ -12,7 +12,7 @@ import (
 type Storage struct {
 	BootType    BootType     `yaml:"bootType"`
 	Disks       []Disk       `yaml:"disks"`
-	MountPoints []MountPoint `yaml:"mountPoints"`
+	FileSystems []FileSystem `yaml:"fileSystems"`
 }
 
 func (s *Storage) IsValid() (err error) {
@@ -50,8 +50,8 @@ func (s *Storage) IsValid() (err error) {
 	}
 
 	// Verify the mount point settings are valid.
-	mountPointIDSet := make(map[string]MountPoint)
-	for i, mountPoint := range s.MountPoints {
+	mountPointIDSet := make(map[string]FileSystem)
+	for i, mountPoint := range s.FileSystems {
 		err = mountPoint.IsValid()
 		if err != nil {
 			return fmt.Errorf("invalid mountPoints item at index %d: %w", i, err)

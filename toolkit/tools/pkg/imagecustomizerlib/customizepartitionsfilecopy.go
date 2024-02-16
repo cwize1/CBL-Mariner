@@ -32,7 +32,7 @@ func customizePartitionsUsingFileCopy(buildDir string, baseConfigPath string, co
 		return copyFilesIntoNewDisk(existingImageConnection.Chroot(), imageChroot)
 	}
 
-	err = createNewImage(newBuildImageFile, diskConfig, config.Storage.MountPoints,
+	err = createNewImage(newBuildImageFile, diskConfig, config.Storage.FileSystems,
 		config.Storage.BootType, config.OS.KernelCommandLine, config.OS.SELinux, buildDir, "newimageroot",
 		currentSELinuxMode, installOSFunc)
 	if err != nil {

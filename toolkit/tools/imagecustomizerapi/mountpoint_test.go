@@ -10,7 +10,7 @@ import (
 )
 
 func TestMountPointIsValidInvalidMountIdentifier(t *testing.T) {
-	mountPoint := MountPoint{
+	mountPoint := FileSystem{
 		DeviceId:            "a",
 		FileSystemType:      "fat32",
 		MountIdentifierType: "bad",
@@ -23,7 +23,7 @@ func TestMountPointIsValidInvalidMountIdentifier(t *testing.T) {
 }
 
 func TestMountPointIsValidUnsupportedFileSystem(t *testing.T) {
-	mountPoint := MountPoint{
+	mountPoint := FileSystem{
 		DeviceId:       "a",
 		FileSystemType: "bad",
 	}

@@ -293,7 +293,7 @@ func createFakeEfiImage(buildDir string) (string, error) {
 		},
 	}
 
-	mountPoints := []imagecustomizerapi.MountPoint{
+	fileSystems := []imagecustomizerapi.FileSystem{
 		{
 			DeviceId:            "boot",
 			Path:                "/boot/efi",
@@ -318,7 +318,7 @@ func createFakeEfiImage(buildDir string) (string, error) {
 		return nil
 	}
 
-	err = createNewImage(rawDisk, diskConfig, mountPoints, "efi",
+	err = createNewImage(rawDisk, diskConfig, fileSystems, "efi",
 		imagecustomizerapi.KernelCommandLine{}, imagecustomizerapi.SELinux{}, buildDir, testImageRootDirName,
 		imagecustomizerapi.SELinuxModeDisabled, installOS)
 	if err != nil {

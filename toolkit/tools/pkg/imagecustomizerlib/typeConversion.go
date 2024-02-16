@@ -24,14 +24,14 @@ func bootTypeToImager(bootType imagecustomizerapi.BootType) (string, error) {
 	}
 }
 
-func diskConfigToImager(diskConfig imagecustomizerapi.Disk, mountPoints []imagecustomizerapi.MountPoint,
+func diskConfigToImager(diskConfig imagecustomizerapi.Disk, fileSystems []imagecustomizerapi.FileSystem,
 ) (configuration.Disk, error) {
 	imagerPartitionTableType, err := partitionTableTypeToImager(diskConfig.PartitionTableType)
 	if err != nil {
 		return configuration.Disk{}, err
 	}
 
-	imagerPartitions, err := partitionsToImager(diskConfig.Partitions, mountPoints)
+	imagerPartitions, err := partitionsToImager(diskConfig.Partitions, fileSystems)
 	if err != nil {
 		return configuration.Disk{}, err
 	}
@@ -55,10 +55,10 @@ func partitionTableTypeToImager(partitionTableType imagecustomizerapi.PartitionT
 	}
 }
 
-func partitionsToImager(partitions []imagecustomizerapi.Partition, mountPoints []imagecustomizerapi.MountPoint) ([]configuration.Partition, error) {
+func partitionsToImager(partitions []imagecustomizerapi.Partition, fileSystems []imagecustomizerapi.FileSystem) ([]configuration.Partition, error) {
 	imagerPartitions := []configuration.Partition(nil)
 	for _, partition := range partitions {
-		imagerPartition, err := partitionToImager(partition, mountPoints)
+		imagerPartition, err := partitionToImager(partition, fileSystems)
 		if err != nil {
 			return nil, err
 		}
@@ -69,10 +69,10 @@ func partitionsToImager(partitions []imagecustomizerapi.Partition, mountPoints [
 	return imagerPartitions, nil
 }
 
-func partitionToImager(partition imagecustomizerapi.Partition, mountPoints []imagecustomizerapi.MountPoint,
+func partitionToImager(partition imagecustomizerapi.Partition, fileSystems []imagecustomizerapi.FileSystem,
 ) (configuration.Partition, error) {
-	mountPoint, foundMountPoint := sliceutils.FindValueFunc(mountPoints, func(mountPoint imagecustomizerapi.MountPoint) bool {
-		return mountPoint.DeviceId == partition.ID
+	fileSystem, foundMountPoint := sliceutils.FindValueFunc(fileSystems, func(fileSystem imagecustomizerapi.FileSystem) bool {
+		return fileSystem.DeviceId == partition.ID
 	})
 	if !foundMountPoint {
 		return configuration.Partition{}, fmt.Errorf("failed to find mount point with ID (%s)", partition.ID)
@@ -87,7 +87,7 @@ func partitionToImager(partition imagecustomizerapi.Partition, mountPoints []ima
 
 	imagerPartition := configuration.Partition{
 		ID:     partition.ID,
-		FsType: string(mountPoint.FileSystemType),
+		FsType: string(fileSystem.FileSystemType),
 		Name:   partition.Label,
 		Start:  partition.Start,
 		End:    imagerEnd,
@@ -126,11 +126,11 @@ func partitionFlagToImager(flag imagecustomizerapi.PartitionFlag) (configuration
 	}
 }
 
-func mountPointsToImager(mountPoints []imagecustomizerapi.MountPoint,
+func fileSystemsToImager(fileSystems []imagecustomizerapi.FileSystem,
 ) ([]configuration.PartitionSetting, error) {
 	imagerPartitionSettings := []configuration.PartitionSetting(nil)
-	for _, mountPoint := range mountPoints {
-		imagerPartitionSetting, err := mountPointToImager(mountPoint)
+	for _, mountPoint := range fileSystems {
+		imagerPartitionSetting, err := fileSystemToImager(mountPoint)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +139,7 @@ func mountPointsToImager(mountPoints []imagecustomizerapi.MountPoint,
 	return imagerPartitionSettings, nil
 }
 
-func mountPointToImager(mountPoint imagecustomizerapi.MountPoint,
+func fileSystemToImager(mountPoint imagecustomizerapi.FileSystem,
 ) (configuration.PartitionSetting, error) {
 	imagerMountIdentifierType, err := mountIdentifierTypeToImager(mountPoint.MountIdentifierType)
 	if err != nil {

@@ -8,9 +8,9 @@ import (
 	"path"
 )
 
-// MountPoint holds the mounting information for each partition.
-type MountPoint struct {
-	// DeviceId is used to correlate `Partition` objects with `MountPoint` objects.
+// FileSystem holds the formatting and mounting information for each partition.
+type FileSystem struct {
+	// DeviceId is used to correlate `Partition` objects with `FileSystem` objects.
 	DeviceId string `yaml:"deviceId"`
 	// FileSystemType is the type of file system to use on the partition.
 	FileSystemType FileSystemType `yaml:"fsType"`
@@ -23,10 +23,10 @@ type MountPoint struct {
 }
 
 // IsValid returns an error if the PartitionSetting is not valid
-func (p *MountPoint) IsValid() error {
+func (p *FileSystem) IsValid() error {
 	err := p.FileSystemType.IsValid()
 	if err != nil {
-		return fmt.Errorf("invalid MountPoint (%s) FilesystemType value:\n%w", p.DeviceId, err)
+		return fmt.Errorf("invalid FileSystem (%s) FilesystemType value:\n%w", p.DeviceId, err)
 	}
 
 	err = p.MountIdentifierType.IsValid()

@@ -27,7 +27,7 @@ func TestConfigIsValid(t *testing.T) {
 				},
 			}},
 			BootType: "efi",
-			MountPoints: []MountPoint{
+			FileSystems: []FileSystem{
 				{
 					DeviceId:       "esp",
 					Path:           "/boot/efi",
@@ -61,7 +61,7 @@ func TestConfigIsValidLegacy(t *testing.T) {
 				},
 			}},
 			BootType: "legacy",
-			MountPoints: []MountPoint{
+			FileSystems: []FileSystem{
 				{
 					DeviceId:       "boot",
 					FileSystemType: "fat32",
@@ -90,7 +90,7 @@ func TestConfigIsValidNoBootType(t *testing.T) {
 					},
 				},
 			}},
-			MountPoints: []MountPoint{
+			FileSystems: []FileSystem{
 				{
 					DeviceId:       "a",
 					FileSystemType: "ext4",
@@ -238,7 +238,7 @@ func TestConfigIsValidInvalidMountPoint(t *testing.T) {
 				},
 			}},
 			BootType: "efi",
-			MountPoints: []MountPoint{
+			FileSystems: []FileSystem{
 				{
 					DeviceId:       "esp",
 					FileSystemType: "fat32",
@@ -274,7 +274,7 @@ func TestConfigIsValidInvalidPartitionId(t *testing.T) {
 				},
 			}},
 			BootType: "efi",
-			MountPoints: []MountPoint{
+			FileSystems: []FileSystem{
 				{
 					DeviceId:       "boot",
 					FileSystemType: "fat32",
@@ -311,7 +311,7 @@ func TestConfigIsValidKernelCLI(t *testing.T) {
 				},
 			}},
 			BootType: "efi",
-			MountPoints: []MountPoint{
+			FileSystems: []FileSystem{
 				{
 					DeviceId:       "esp",
 					FileSystemType: "fat32",

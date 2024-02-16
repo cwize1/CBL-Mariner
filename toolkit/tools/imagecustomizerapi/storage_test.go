@@ -24,7 +24,7 @@ func TestStorageIsValidDuplicatePartitionID(t *testing.T) {
 			},
 		},
 		BootType: "efi",
-		MountPoints: []MountPoint{
+		FileSystems: []FileSystem{
 			{
 				DeviceId:       "a",
 				FileSystemType: "ext4",
@@ -57,7 +57,7 @@ func TestStorageIsValidBadEspFsType(t *testing.T) {
 			},
 		},
 		BootType: "efi",
-		MountPoints: []MountPoint{
+		FileSystems: []FileSystem{
 			{
 				DeviceId:       "a",
 				FileSystemType: "ext4",
@@ -87,7 +87,7 @@ func TestStorageIsValidBadBiosBootFsType(t *testing.T) {
 			},
 		},
 		BootType: "legacy",
-		MountPoints: []MountPoint{
+		FileSystems: []FileSystem{
 			{
 				DeviceId:       "a",
 				FileSystemType: "ext4",
