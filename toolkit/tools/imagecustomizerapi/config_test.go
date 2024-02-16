@@ -17,12 +17,9 @@ func TestConfigIsValid(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "esp",
-						Start: 1,
-						Flags: []PartitionFlag{
-							"esp",
-							"boot",
-						},
+						ID:                "esp",
+						Start:             1,
+						BootPartitionType: "esp",
 					},
 				},
 			}},
@@ -52,11 +49,9 @@ func TestConfigIsValidLegacy(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "boot",
-						Start: 1,
-						Flags: []PartitionFlag{
-							"bios_grub",
-						},
+						ID:                "boot",
+						Start:             1,
+						BootPartitionType: "bios-grub",
 					},
 				},
 			}},
@@ -228,12 +223,9 @@ func TestConfigIsValidInvalidMountPoint(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "esp",
-						Start: 1,
-						Flags: []PartitionFlag{
-							"esp",
-							"boot",
-						},
+						ID:                "esp",
+						Start:             1,
+						BootPartitionType: BootPartitionTypeESP,
 					},
 				},
 			}},
@@ -264,12 +256,9 @@ func TestConfigIsValidInvalidPartitionId(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "esp",
-						Start: 1,
-						Flags: []PartitionFlag{
-							"esp",
-							"boot",
-						},
+						ID:                "esp",
+						Start:             1,
+						BootPartitionType: BootPartitionTypeESP,
 					},
 				},
 			}},
@@ -301,12 +290,9 @@ func TestConfigIsValidKernelCLI(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "esp",
-						Start: 1,
-						Flags: []PartitionFlag{
-							"esp",
-							"boot",
-						},
+						ID:                "esp",
+						Start:             1,
+						BootPartitionType: BootPartitionTypeESP,
 					},
 				},
 			}},

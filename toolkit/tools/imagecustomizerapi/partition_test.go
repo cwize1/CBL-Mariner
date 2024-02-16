@@ -126,35 +126,35 @@ func TestPartitionIsValidNameNonASCII(t *testing.T) {
 
 func TestPartitionIsValidGoodFlag(t *testing.T) {
 	partition := Partition{
-		ID:    "a",
-		Start: 0,
-		End:   nil,
-		Flags: []PartitionFlag{"esp"},
+		ID:                "a",
+		Start:             0,
+		End:               nil,
+		BootPartitionType: "esp",
 	}
 
 	err := partition.IsValid()
 	assert.NoError(t, err)
 }
 
-func TestPartitionIsValidBadFlag(t *testing.T) {
+func TestPartitionIsValidBadBootType(t *testing.T) {
 	partition := Partition{
-		ID:    "a",
-		Start: 0,
-		End:   nil,
-		Flags: []PartitionFlag{"a"},
+		ID:                "a",
+		Start:             0,
+		End:               nil,
+		BootPartitionType: "a",
 	}
 
 	err := partition.IsValid()
 	assert.Error(t, err)
-	assert.ErrorContains(t, err, "PartitionFlag")
+	assert.ErrorContains(t, err, "BootType")
 }
 
 func TestPartitionIsValidBadBiosBootStart(t *testing.T) {
 	partition := Partition{
-		ID:    "a",
-		Start: 2,
-		End:   nil,
-		Flags: []PartitionFlag{"bios_grub"},
+		ID:                "a",
+		Start:             2,
+		End:               nil,
+		BootPartitionType: "bios-grub",
 	}
 
 	err := partition.IsValid()

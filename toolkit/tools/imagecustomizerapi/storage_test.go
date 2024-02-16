@@ -49,9 +49,9 @@ func TestStorageIsValidBadEspFsType(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "a",
-						Start: 1,
-						Flags: []PartitionFlag{"esp", "boot"},
+						ID:                "a",
+						Start:             1,
+						BootPartitionType: "esp",
 					},
 				},
 			},
@@ -79,9 +79,9 @@ func TestStorageIsValidBadBiosBootFsType(t *testing.T) {
 				MaxSize:            2,
 				Partitions: []Partition{
 					{
-						ID:    "a",
-						Start: 1,
-						Flags: []PartitionFlag{"bios_grub"},
+						ID:                "a",
+						Start:             1,
+						BootPartitionType: "bios-grub",
 					},
 				},
 			},
