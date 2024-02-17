@@ -1,0 +1,22 @@
+SystemConfig:
+  KernelCommandLine:
+    SELinux: enforcing
+
+  PackagesInstall:
+  - openssh-server
+  - selinux-policy
+  - selinux-policy-modules
+  - setools-console
+  - policycoreutils-python-utils
+
+  Services:
+    Enable:
+    - Name: sshd.service
+
+  Users:
+  - Name: test
+    SSHPubKeys:
+    # Add your SSH public key here.
+
+  PostInstallScripts:
+  - Path: scripts/open-firewall.sh
