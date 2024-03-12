@@ -54,14 +54,14 @@ type IsoWorkingDirs struct {
 // `IsoArtifacts` holds the extracted/generated artifacts necessary to build
 // a LiveOS ISO image.
 type IsoArtifacts struct {
-	kernelVersion     string
-	bootx64EfiPath    string
-	grubx64EfiPath    string
-	grubCfgPath       string
-	vmlinuzPath       string
-	initrdImagePath   string
-	squashfsImagePath string
-	bootDirFiles      map[string]string // local-build-path -> iso-media-path
+	kernelVersion      string
+	efiBinaryFilePaths []string
+	grubNoprefix       bool
+	grubCfgPath        string
+	vmlinuzPath        string
+	initrdImagePath    string
+	squashfsImagePath  string
+	bootDirFiles       map[string]string // local-build-path -> iso-media-path
 }
 
 type LiveOSIsoBuilder struct {
@@ -133,18 +133,13 @@ func (b *LiveOSIsoBuilder) stageIsoMakerInitrdArtifacts(writeableRootfsDir, isoM
 		return fmt.Errorf("failed to create %s\n%w", targetBootloadersDir, err)
 	}
 
-	sourceBoot64EfiPath := b.artifacts.bootx64EfiPath
-	targetBoot64EfiPath := filepath.Join(targetBootloadersDir, "bootx64.efi")
-	err = file.Copy(sourceBoot64EfiPath, targetBoot64EfiPath)
-	if err != nil {
-		return fmt.Errorf("failed to stage bootloader file (bootx64.efi):\n%w", err)
-	}
-
-	sourceGrub64EfiPath := b.artifacts.grubx64EfiPath
-	targetGrub64EfiPath := filepath.Join(targetBootloadersDir, "grubx64.efi")
-	err = file.Copy(sourceGrub64EfiPath, targetGrub64EfiPath)
-	if err != nil {
-		return fmt.Errorf("failed to stage bootloader file (grubx64.efi):\n%w", err)
+	for _, sourcePath := range b.artifacts.efiBinaryFilePaths {
+		filename := filepath.Base(sourcePath)
+		targetBoot64EfiPath := filepath.Join(targetBootloadersDir, filename)
+		err = file.Copy(sourcePath, targetBoot64EfiPath)
+		if err != nil {
+			return fmt.Errorf("failed to stage bootloader file (%s):\n%w", sourcePath, err)
+		}
 	}
 
 	targetVmlinuzLocalDir := filepath.Join(writeableRootfsDir, isoMakerArtifactsStagingDir)
@@ -291,6 +286,9 @@ func (b *LiveOSIsoBuilder) extractBootDirFiles(writeableRootfsDir string) error 
 	// have them overwritten.
 	exclusions = append(exclusions, regexp.MustCompile(`/boot/initrd\.img.*`))
 
+	foundBootEfi := false
+	foundGrubEfi := false
+
 	err := filepath.Walk(sourceBootDir, func(sourcePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -312,12 +310,22 @@ func (b *LiveOSIsoBuilder) extractBootDirFiles(writeableRootfsDir string) error 
 		copiedByIsoMaker := false
 
 		switch targetFileName {
-		case "bootx64.efi":
-			b.artifacts.bootx64EfiPath = targetPath
+		case "bootx64.efi", "bootaa64.efi":
+			b.artifacts.efiBinaryFilePaths = append(b.artifacts.efiBinaryFilePaths, targetPath)
+			foundBootEfi = true
 			copiedByIsoMaker = true
-		case "grubx64.efi":
-			b.artifacts.grubx64EfiPath = targetPath
+
+		case "grubx64.efi", "grubaa64.efi":
+			b.artifacts.efiBinaryFilePaths = append(b.artifacts.efiBinaryFilePaths, targetPath)
+			foundGrubEfi = true
 			copiedByIsoMaker = true
+
+		case "grubx64-noprefix.efi", "grubaa64-noprefix.efi":
+			b.artifacts.efiBinaryFilePaths = append(b.artifacts.efiBinaryFilePaths, targetPath)
+			b.artifacts.grubNoprefix = true
+			foundGrubEfi = true
+			copiedByIsoMaker = true
+
 		case "grub.cfg":
 			b.artifacts.grubCfgPath = targetPath
 		}
@@ -340,9 +348,16 @@ func (b *LiveOSIsoBuilder) extractBootDirFiles(writeableRootfsDir string) error 
 
 		return nil
 	})
-
 	if err != nil {
-		return fmt.Errorf("failed to extract files from under the boot folder:\n%w", err)
+		return err
+	}
+
+	if !foundBootEfi {
+		return fmt.Errorf("failed to find boot EFI binary (boot*.efi)")
+	}
+
+	if !foundGrubEfi {
+		return fmt.Errorf("failed to find grub EFI binary (grub*.efi)")
 	}
 
 	return nil
@@ -412,7 +427,7 @@ func (b *LiveOSIsoBuilder) prepareLiveOSDir(writeableRootfsDir string, isoMakerA
 
 	err = b.extractBootDirFiles(writeableRootfsDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to extract files from under the boot folder:\n%w", err)
 	}
 
 	err = b.updateGrubCfg(b.artifacts.grubCfgPath, extraCommandLine)
@@ -662,7 +677,8 @@ func (b *LiveOSIsoBuilder) createIsoImage(additionalIsoFiles []safechroot.FileTo
 		isoRepoDirPath,
 		isoOutputDir,
 		isoOutputBaseName,
-		imageNameTag)
+		imageNameTag,
+		b.artifacts.grubNoprefix)
 	if err != nil {
 		return err
 	}

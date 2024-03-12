@@ -1,0 +1,6 @@
+SystemConfig:
+  PackagesRemove:
+  - grub2-efi-binary
+
+  PackagesInstall:
+  - grub2-efi-binary-noprefix

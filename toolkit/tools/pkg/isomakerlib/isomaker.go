@@ -51,13 +51,16 @@ type IsoMaker struct {
 	additionalIsoFiles []safechroot.FileToCopy // Additional files to copy to the ISO media (absolute-source-path -> iso-root-relative-path).
 	imageNameBase      string                  // Base name of the ISO to generate (no path, and no file extension).
 	imageNameTag       string                  // Optional user-supplied tag appended to the generated ISO's name.
+	grubNoprefix       bool                    // Flag declaring that the image is using the noprefix variants of the grub EFI binaries.
 	osFilesPath        string
 
 	isoMakerCleanUpTasks []func() error // List of clean-up tasks to perform at the end of the ISO generation process.
 }
 
 // NewIsoMaker returns a new ISO maker.
-func NewIsoMaker(unattendedInstall bool, baseDirPath, buildDirPath, releaseVersion, resourcesDirPath, configFilePath, initrdPath, isoRepoDirPath, outputDir, imageNameTag string) (isoMaker *IsoMaker, err error) {
+func NewIsoMaker(unattendedInstall bool, baseDirPath, buildDirPath, releaseVersion, resourcesDirPath, configFilePath,
+	initrdPath, isoRepoDirPath, outputDir, imageNameTag string,
+) (isoMaker *IsoMaker, err error) {
 	if baseDirPath == "" {
 		baseDirPath = filepath.Dir(configFilePath)
 	}
@@ -93,7 +96,11 @@ func NewIsoMaker(unattendedInstall bool, baseDirPath, buildDirPath, releaseVersi
 	return isoMaker, nil
 }
 
-func NewIsoMakerWithConfig(unattendedInstall, enableBiosBoot, enableRpmRepo bool, baseDirPath, buildDirPath, releaseVersion, resourcesDirPath string, additionalIsoFiles []safechroot.FileToCopy, config configuration.Config, osFilesPath, initrdPath, grubCfgPath, isoRepoDirPath, outputDir, imageNameBase, imageNameTag string) (isoMaker *IsoMaker, err error) {
+func NewIsoMakerWithConfig(unattendedInstall, enableBiosBoot, enableRpmRepo bool, baseDirPath, buildDirPath,
+	releaseVersion, resourcesDirPath string, additionalIsoFiles []safechroot.FileToCopy, config configuration.Config,
+	osFilesPath, initrdPath, grubCfgPath, isoRepoDirPath, outputDir, imageNameBase, imageNameTag string,
+	grubNoprefix bool,
+) (isoMaker *IsoMaker, err error) {
 
 	if imageNameBase == "" {
 		imageNameBase = defaultImageNameBase
@@ -125,6 +132,7 @@ func NewIsoMakerWithConfig(unattendedInstall, enableBiosBoot, enableRpmRepo bool
 		imageNameBase:      imageNameBase,
 		imageNameTag:       imageNameTag,
 		osFilesPath:        osFilesPath,
+		grubNoprefix:       grubNoprefix,
 	}
 
 	return isoMaker, nil
@@ -303,12 +311,20 @@ func (im *IsoMaker) setUpIsoGrub2Bootloader() (err error) {
 	logger.Log.Debug("Copying EFI modules into efiboot.img.")
 	// Copy Shim (boot<arch>64.efi) and grub2 (grub<arch>64.efi)
 	if runtime.GOARCH == "arm64" {
-		err = im.copyShimFromInitrd(efiBootImgTempMountDir, "bootaa64.efi", "grubaa64.efi")
+		grubEfi := "grubaa64.efi"
+		if im.grubNoprefix {
+			grubEfi = "grubaa64-noprefix.efi"
+		}
+		err = im.copyShimFromInitrd(efiBootImgTempMountDir, "bootaa64.efi", grubEfi)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = im.copyShimFromInitrd(efiBootImgTempMountDir, "bootx64.efi", "grubx64.efi")
+		grubEfi := "grubx64.efi"
+		if im.grubNoprefix {
+			grubEfi = "grubx64-noprefix.efi"
+		}
+		err = im.copyShimFromInitrd(efiBootImgTempMountDir, "bootx64.efi", grubEfi)
 		if err != nil {
 			return err
 		}
