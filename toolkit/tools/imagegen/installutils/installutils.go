@@ -1861,6 +1861,8 @@ func SELinuxRelabelFiles(installChroot *safechroot.Chroot, mountPointToFsTypeMap
 	targetRootPath := "/mnt/_bindmountroot"
 	targetRootFullPath := filepath.Join(installChroot.RootDir(), targetRootPath)
 
+	selinuxEnabledOnHost, _ := getSELinuxEnabled()
+
 	for _, mountToLabel := range listOfMountsToLabel {
 		logger.Log.Debugf("Running setfiles to apply SELinux labels on mount points: %v", mountToLabel)
 
@@ -1881,6 +1883,17 @@ func SELinuxRelabelFiles(installChroot *safechroot.Chroot, mountPointToFsTypeMap
 		defer bindMount.Close()
 
 		err = installChroot.UnsafeRun(func() error {
+			// Hack for calling `setfiles` on Fedora.
+			if selinuxEnabledOnHost {
+				runtime.LockOSThread()
+				defer runtime.UnlockOSThread()
+				err := setSELinuxExecContext(FedoraSetFilesContext)
+				if err == nil {
+					// If setSELinuxExecContext() fails, then assume it was because we are running on a non-Fedora machine.
+					defer resetSELinuxExecContext()
+				}
+			}
+
 			// We only want to print basic info, filter out the real output unless at trace level (Execute call handles that)
 			files := 0
 			lastFile := ""
