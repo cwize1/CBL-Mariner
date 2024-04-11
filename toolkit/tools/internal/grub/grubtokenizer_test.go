@@ -15,9 +15,10 @@ import (
 )
 
 func TestTokenizeGrubConfig(t *testing.T) {
-	testsDir := "tokentests/tests"
-	expectedDir := "tokentests/expected"
+	testsDir := "tokentests"
 	actualDir := "tokentests/actual"
+
+	os.Mkdir(actualDir, os.ModePerm)
 
 	testFiles, err := os.ReadDir(testsDir)
 	if !assert.NoError(t, err) {
@@ -25,7 +26,11 @@ func TestTokenizeGrubConfig(t *testing.T) {
 	}
 
 	for _, testFile := range testFiles {
-		testName := testFile.Name()
+		if filepath.Ext(testFile.Name()) != ".test" {
+			continue
+		}
+
+		testName := strings.TrimSuffix(testFile.Name(), ".test")
 
 		grubConfig, err := os.ReadFile(filepath.Join(testsDir, testFile.Name()))
 		if !assert.NoErrorf(t, err, "[%s] Read test file", testName) {
@@ -35,10 +40,10 @@ func TestTokenizeGrubConfig(t *testing.T) {
 		tokens, err := TokenizeGrubConfig(string(grubConfig))
 		actual := tokenGrubConfigResultString(tokens, err)
 
-		err = os.WriteFile(filepath.Join(actualDir, testFile.Name()), []byte(actual), os.ModePerm)
+		err = os.WriteFile(filepath.Join(actualDir, testName+".result"), []byte(actual), os.ModePerm)
 		assert.NoErrorf(t, err, "[%s] Write actual file", testName)
 
-		expected, err := os.ReadFile(filepath.Join(expectedDir, testFile.Name()))
+		expected, err := os.ReadFile(filepath.Join(testsDir, testName+".result"))
 		if assert.NoErrorf(t, err, "[%s] Read expected file", testName) {
 			assert.Equal(t, string(expected), actual)
 		}
