@@ -87,14 +87,10 @@ func tokenTypeString(tokenType TokenType) string {
 		return "LT"
 	case GT:
 		return "GT"
-	case SPACE:
-		return "SPACE"
 	case NEWLINE:
 		return "NEWLINE"
 	case WORD:
 		return "WORD"
-	case COMMENT:
-		return "COMMENT"
 	default:
 		return fmt.Sprintf("UNKNOWN(%d)", tokenType)
 	}

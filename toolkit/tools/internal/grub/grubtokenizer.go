@@ -21,10 +21,8 @@ const (
 	SEMICOLON
 	LT
 	GT
-	SPACE
 	NEWLINE
 	WORD
-	COMMENT
 )
 
 type SubWordType int
@@ -222,8 +220,6 @@ loop:
 }
 
 func (t *grubConfigTokenizer) parseSpace() error {
-	locStart := t.scanner.Loc()
-
 loop:
 	for {
 		c, eof := t.scanner.Peek()
@@ -240,14 +236,10 @@ loop:
 		}
 	}
 
-	token := t.newToken(locStart, t.scanner.Loc(), SPACE)
-	t.tokens = append(t.tokens, token)
 	return nil
 }
 
 func (t *grubConfigTokenizer) parseComment() error {
-	locStart := t.scanner.Loc()
-
 	// Consume the '#' char.
 	t.scanner.Next()
 
@@ -269,8 +261,6 @@ loop:
 		}
 	}
 
-	token := t.newToken(locStart, t.scanner.Loc(), COMMENT)
-	t.tokens = append(t.tokens, token)
 	return nil
 }
 
