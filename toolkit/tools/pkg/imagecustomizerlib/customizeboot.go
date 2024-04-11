@@ -13,6 +13,7 @@ import (
 	"github.com/microsoft/azurelinux/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/azurelinux/toolkit/tools/imagegen/installutils"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/file"
+	"github.com/microsoft/azurelinux/toolkit/tools/internal/grub"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/logger"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/safechroot"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/shell"
@@ -56,6 +57,15 @@ const (
 	initPathRegexPathStart    = 2
 	initPathRegexPathIndexEnd = 3
 )
+
+func replaceSearchCommand2(inputGrubCfgContent string, searchCommand string) (outputGrubCfgContent string, err error) {
+	grubTokens, err := grub.TokenizeGrubConfig(inputGrubCfgContent)
+	if err != nil {
+		return "", err
+	}
+
+	grubLines := grub.SplitTokensIntoLines(grubTokens)
+}
 
 func replaceSearchCommand(inputGrubCfgContent string, searchCommand string) (outputGrubCfgContent string, err error) {
 
