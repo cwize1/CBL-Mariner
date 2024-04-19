@@ -4,7 +4,7 @@
 Summary: The open-source application container engine
 Name:    %{upstream_name}-engine
 Version: 20.10.27
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: ASL 2.0
 Group:   Tools/Container
 URL: https://mobyproject.org
@@ -27,6 +27,7 @@ Patch2:  CVE-2024-23651.patch
 # Backport of vendored "buildkit" v0.12.5 https://github.com/moby/buildkit/pull/4603 to 0.8.4-0.20221020190723-eeb7b65ab7d6 in this package.
 # Remove once we upgrade this package at least to version 25.0+.
 Patch3:  CVE-2024-23652.patch
+Patch4:  CVE-2023-45288.patch
 
 %{?systemd_requires}
 
@@ -134,6 +135,9 @@ fi
 %{_unitdir}/*
 
 %changelog
+* Thu Apr 18 2024 Chris Gunn <chrisgun@microsoft.com> - 20.10.27-5
+- Fix for CVE-2023-45288
+
 * Mon Feb 12 2024 Muhammad Falak <mwani@microsoft.com> - 20.10.27-4
 - Bump release to rebuild with go 1.21.6
 
