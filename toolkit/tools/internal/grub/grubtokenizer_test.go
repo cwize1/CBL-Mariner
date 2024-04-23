@@ -32,12 +32,7 @@ func TestTokenizeGrubConfig(t *testing.T) {
 
 		testName := strings.TrimSuffix(testFile.Name(), ".test")
 
-		grubConfig, err := os.ReadFile(filepath.Join(testsDir, testFile.Name()))
-		if !assert.NoErrorf(t, err, "[%s] Read test file", testName) {
-			continue
-		}
-
-		tokens, err := TokenizeGrubConfig(string(grubConfig))
+		tokens, err := TokenizeGrubConfigFile(filepath.Join(testsDir, testFile.Name()))
 		actual := tokenGrubConfigResultString(tokens, err)
 
 		err = os.WriteFile(filepath.Join(actualDir, testName+".result"), []byte(actual), os.ModePerm)
