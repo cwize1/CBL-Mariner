@@ -545,3 +545,43 @@ func (t *grubConfigTokenizer) newSubWord(locStart, locEnd filescanner.SourceLoc,
 	}
 	return token
 }
+
+func TokenTypeString(tokenType TokenType) string {
+	switch tokenType {
+	case LBRACE:
+		return "LBRACE"
+	case RBRACE:
+		return "RBRACE"
+	case BAR:
+		return "BAR"
+	case AND:
+		return "AND"
+	case SEMICOLON:
+		return "SEMICOLON"
+	case LT:
+		return "LT"
+	case GT:
+		return "GT"
+	case NEWLINE:
+		return "NEWLINE"
+	case WORD:
+		return "WORD"
+	default:
+		return fmt.Sprintf("UNKNOWN(%d)", tokenType)
+	}
+}
+
+func SubWordTypeString(subWordType SubWordType) string {
+	switch subWordType {
+	case KEYWORD_STRING:
+		return "KEYWORD_STRING"
+	case STRING:
+		return "STRING"
+	case VAR_EXPANSION:
+		return "VAR_EXPANSION"
+	case QUOTED_VAR_EXPANSION:
+		return "QUOTED_VAR_EXPANSION"
+	default:
+		return fmt.Sprintf("UNKNOWN(%d)", subWordType)
+	}
+}

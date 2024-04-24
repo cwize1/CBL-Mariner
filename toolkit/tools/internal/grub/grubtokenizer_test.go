@@ -52,56 +52,16 @@ func tokenGrubConfigResultString(tokens []Token, err error) string {
 	sb.WriteString("Tokens:\n")
 
 	for _, token := range tokens {
-		sb.WriteString(fmt.Sprintf("%s[%d:%d-%d:%d][%d-%d]\n", tokenTypeString(token.Type),
+		sb.WriteString(fmt.Sprintf("%s[%d:%d-%d:%d][%d-%d]\n", TokenTypeString(token.Type),
 			token.Loc.Start.Line, token.Loc.Start.Col, token.Loc.End.Line, token.Loc.End.Col,
 			token.Loc.Start.Index, token.Loc.End.Index))
 
 		for _, subWord := range token.SubWords {
-			sb.WriteString(fmt.Sprintf("  %s[%d:%d-%d:%d][%d-%d](%s)\n", subWordTypeString(subWord.Type),
+			sb.WriteString(fmt.Sprintf("  %s[%d:%d-%d:%d][%d-%d](%s)\n", SubWordTypeString(subWord.Type),
 				subWord.Loc.Start.Line, subWord.Loc.Start.Col, subWord.Loc.End.Line, subWord.Loc.End.Col,
 				subWord.Loc.Start.Index, subWord.Loc.End.Index, strconv.Quote(subWord.Value)))
 		}
 	}
 
 	return sb.String()
-}
-
-func tokenTypeString(tokenType TokenType) string {
-	switch tokenType {
-	case LBRACE:
-		return "LBRACE"
-	case RBRACE:
-		return "RBRACE"
-	case BAR:
-		return "BAR"
-	case AND:
-		return "AND"
-	case SEMICOLON:
-		return "SEMICOLON"
-	case LT:
-		return "LT"
-	case GT:
-		return "GT"
-	case NEWLINE:
-		return "NEWLINE"
-	case WORD:
-		return "WORD"
-	default:
-		return fmt.Sprintf("UNKNOWN(%d)", tokenType)
-	}
-}
-
-func subWordTypeString(subWordType SubWordType) string {
-	switch subWordType {
-	case KEYWORD_STRING:
-		return "KEYWORD_STRING"
-	case STRING:
-		return "STRING"
-	case VAR_EXPANSION:
-		return "VAR_EXPANSION"
-	case QUOTED_VAR_EXPANSION:
-		return "QUOTED_VAR_EXPANSION"
-	default:
-		return fmt.Sprintf("UNKNOWN(%d)", subWordType)
-	}
 }
