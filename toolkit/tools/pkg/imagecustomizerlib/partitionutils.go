@@ -10,12 +10,18 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/microsoft/azurelinux/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/azurelinux/toolkit/tools/imagegen/diskutils"
 	"github.com/microsoft/azurelinux/toolkit/tools/imagegen/installutils"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/file"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/logger"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/safechroot"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/safemount"
+	"github.com/microsoft/azurelinux/toolkit/tools/internal/sliceutils"
+)
+
+const (
+	fstabPath = "/etc/fstab"
 )
 
 var (
@@ -149,10 +155,10 @@ func findRootfsPartition(diskPartitions []diskutils.PartitionInfo, buildDir stri
 		defer partitionMount.Close()
 
 		// Check if the /etc/fstab file exists.
-		fstabPath := filepath.Join(tmpDir, "/etc/fstab")
+		fstabPath := filepath.Join(tmpDir, fstabPath)
 		exists, err := file.PathExists(fstabPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check if /etc/fstab file exists (%s):\n%w", diskPartition.Path, err)
+			return nil, fmt.Errorf("failed to check if %s file exists (%s):\n%w", fstabPath, diskPartition.Path, err)
 		}
 
 		if exists {
@@ -192,7 +198,7 @@ func findMountsFromRootfs(rootfsPartition *diskutils.PartitionInfo, diskPartitio
 	defer rootfsPartitionMount.Close()
 
 	// Read the fstab file.
-	fstabPath := filepath.Join(tmpDir, "/etc/fstab")
+	fstabPath := filepath.Join(tmpDir, fstabPath)
 
 	mountPoints, err := findMountsFromFstabFile(fstabPath, diskPartitions)
 	if err != nil {
@@ -218,7 +224,7 @@ func findMountsFromFstabFile(fstabPath string, diskPartitions []diskutils.Partit
 
 	mountPoints, err := fstabEntriesToMountPoints(fstabEntries, diskPartitions)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find mount info for fstab file entries:\n%w", err)
 	}
 
 	return mountPoints, nil
@@ -265,16 +271,109 @@ func fstabEntriesToMountPoints(fstabEntries []diskutils.FstabEntry, diskPartitio
 }
 
 func findSourcePartition(source string, partitions []diskutils.PartitionInfo) (string, error) {
-	partUuid, isPartUuid := strings.CutPrefix(source, "PARTUUID=")
-	if isPartUuid {
-		for _, partition := range partitions {
-			if partition.PartUuid == partUuid {
-				return partition.Path, nil
-			}
-		}
-
-		return "", fmt.Errorf("partition not found: %s", source)
+	mountIdType, mountId, err := parseSourcePartition(source)
+	if err != nil {
+		return "", err
 	}
 
-	return "", fmt.Errorf("unknown fstab source type: %s", source)
+	matches := sliceutils.FindMatches(partitions, func(partition diskutils.PartitionInfo) bool {
+		switch mountIdType {
+		case imagecustomizerapi.MountIdentifierTypeUuid:
+			return partition.Uuid == mountId
+		case imagecustomizerapi.MountIdentifierTypePartUuid:
+			return partition.PartUuid == mountId
+		case imagecustomizerapi.MountIdentifierTypePartLabel:
+			return partition.PartLabel == mountId
+		}
+		return false
+	})
+	if len(matches) < 1 {
+		return "", fmt.Errorf("partition not found (%s)", source)
+	}
+	if len(matches) > 1 {
+		return "", fmt.Errorf("too many matches for partition found (%s)", source)
+	}
+
+	return matches[0].Path, nil
+}
+
+func parseSourcePartition(source string) (imagecustomizerapi.MountIdentifierType, string, error) {
+	uuid, isUuid := strings.CutPrefix(source, "UUID=")
+	if isUuid {
+		return imagecustomizerapi.MountIdentifierTypeUuid, uuid, nil
+	}
+
+	partUuid, isPartUuid := strings.CutPrefix(source, "PARTUUID=")
+	if isPartUuid {
+		return imagecustomizerapi.MountIdentifierTypePartUuid, partUuid, nil
+	}
+
+	partLabel, isPartLabel := strings.CutPrefix(source, "PARTLABEL=")
+	if isPartLabel {
+		return imagecustomizerapi.MountIdentifierTypePartLabel, partLabel, nil
+	}
+
+	err := fmt.Errorf("unknown fstab source type (%s)", source)
+	return imagecustomizerapi.MountIdentifierTypeDefault, "", err
+}
+
+func findRootMountIdTypeFromFstabFile(imageConnection *ImageConnection,
+) (imagecustomizerapi.MountIdentifierType, error) {
+	fstabPath := filepath.Join(imageConnection.chroot.RootDir(), fstabPath)
+
+	// Read the fstab file.
+	fstabEntries, err := diskutils.ReadFstabFile(fstabPath)
+	if err != nil {
+		return imagecustomizerapi.MountIdentifierTypeDefault, err
+	}
+
+	rootMountMatches := sliceutils.FindMatches(fstabEntries, func(fstabEntry diskutils.FstabEntry) bool {
+		return fstabEntry.Target == "/"
+	})
+	if len(rootMountMatches) < 1 {
+		err := fmt.Errorf("failed to find root mount (/) in fstab file")
+		return imagecustomizerapi.MountIdentifierTypeDefault, err
+	}
+	if len(rootMountMatches) > 1 {
+		err := fmt.Errorf("too many root mounts (/) in fstab file")
+		return imagecustomizerapi.MountIdentifierTypeDefault, err
+	}
+
+	rootMount := rootMountMatches[0]
+
+	rootMountIdType, _, err := parseSourcePartition(rootMount.Source)
+	if err != nil {
+		err := fmt.Errorf("failed to get mount ID type of root (/) from fstab file:\n%w", err)
+		return imagecustomizerapi.MountIdentifierTypeDefault, err
+	}
+
+	return rootMountIdType, nil
+}
+
+func getImageBootType(imageConnection *ImageConnection) (imagecustomizerapi.BootType, error) {
+	diskPartitions, err := diskutils.GetDiskPartitions(imageConnection.Loopback().DevicePath())
+	if err != nil {
+		return "", err
+	}
+
+	return getImageBootTypeHelper(diskPartitions)
+}
+
+func getImageBootTypeHelper(diskPartitions []diskutils.PartitionInfo) (imagecustomizerapi.BootType, error) {
+	systemBootPartition, err := findSystemBootPartition(diskPartitions)
+	if err != nil {
+		return "", err
+	}
+
+	switch systemBootPartition.PartitionTypeUuid {
+	case diskutils.EfiSystemPartitionTypeUuid:
+		return imagecustomizerapi.BootTypeEfi, nil
+
+	case diskutils.BiosBootPartitionTypeUuid:
+		return imagecustomizerapi.BootTypeLegacy, nil
+
+	default:
+		return "", fmt.Errorf("internal error: unexpected system boot partition UUID (%s)",
+			systemBootPartition.PartitionTypeUuid)
+	}
 }

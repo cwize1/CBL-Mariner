@@ -12,23 +12,29 @@ import (
 
 // OS defines how each system present on the image is supposed to be configured.
 type OS struct {
-	ResetBootLoaderType ResetBootLoaderType `yaml:"resetBootLoaderType"`
-	Hostname            string              `yaml:"hostname"`
-	Packages            Packages            `yaml:"packages"`
-	SELinux             SELinux             `yaml:"selinux"`
-	KernelCommandLine   KernelCommandLine   `yaml:"kernelCommandLine"`
-	AdditionalFiles     AdditionalFilesMap  `yaml:"additionalFiles"`
-	AdditionalDirs      DirConfigList       `yaml:"additionalDirs"`
-	Users               []User              `yaml:"users"`
-	Services            Services            `yaml:"services"`
-	Modules             []Module            `yaml:"modules"`
-	Verity              *Verity             `yaml:"verity"`
-	Overlays            *[]Overlay          `yaml:"overlays"`
+	ResetBootLoaderType      ResetBootLoaderType      `yaml:"resetBootLoaderType"`
+	ResetPartitionsUuidsType ResetPartitionsUuidsType `yaml:"resetPartitionsUuidsType"`
+	Hostname                 string                   `yaml:"hostname"`
+	Packages                 Packages                 `yaml:"packages"`
+	SELinux                  SELinux                  `yaml:"selinux"`
+	KernelCommandLine        KernelCommandLine        `yaml:"kernelCommandLine"`
+	AdditionalFiles          AdditionalFilesMap       `yaml:"additionalFiles"`
+	AdditionalDirs           DirConfigList            `yaml:"additionalDirs"`
+	Users                    []User                   `yaml:"users"`
+	Services                 Services                 `yaml:"services"`
+	Modules                  []Module                 `yaml:"modules"`
+	Verity                   *Verity                  `yaml:"verity"`
+	Overlays                 *[]Overlay               `yaml:"overlays"`
 }
 
 func (s *OS) IsValid() error {
 	var err error
 	err = s.ResetBootLoaderType.IsValid()
+	if err != nil {
+		return err
+	}
+
+	err = s.ResetPartitionsUuidsType.IsValid()
 	if err != nil {
 		return err
 	}

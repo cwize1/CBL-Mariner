@@ -226,7 +226,7 @@ func (b *LiveOSIsoBuilder) prepareRootfsForDracut(writeableRootfsDir string) err
 
 	logger.Log.Debugf("Preparing writeable image for dracut")
 
-	fstabFile := filepath.Join(writeableRootfsDir, "/etc/fstab")
+	fstabFile := filepath.Join(writeableRootfsDir, fstabPath)
 	logger.Log.Debugf("Deleting fstab from %s", fstabFile)
 	err := os.Remove(fstabFile)
 	if err != nil {

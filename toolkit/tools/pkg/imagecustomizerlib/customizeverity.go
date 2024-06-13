@@ -16,6 +16,7 @@ import (
 )
 
 func enableVerityPartition(buildDir string, verity *imagecustomizerapi.Verity, imageChroot *safechroot.Chroot,
+	bootCustomizer *BootCustomizer,
 ) (bool, error) {
 	var err error
 
@@ -38,7 +39,7 @@ func enableVerityPartition(buildDir string, verity *imagecustomizerapi.Verity, i
 		return false, fmt.Errorf("failed to update fstab file for verity:\n%w", err)
 	}
 
-	err = prepareGrubConfigForVerity(imageChroot)
+	err = bootCustomizer.PrepareForVerity()
 	if err != nil {
 		return false, fmt.Errorf("failed to prepare grub config files for verity:\n%w", err)
 	}
@@ -86,25 +87,6 @@ func updateFstabForVerity(buildDir string, imageChroot *safechroot.Chroot) error
 
 	// Write the updated fstab entries back to the fstab file
 	err = diskutils.WriteFstabFile(updatedEntries, fstabFile)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func prepareGrubConfigForVerity(imageChroot *safechroot.Chroot) error {
-	bootCustomizer, err := NewBootCustomizer(imageChroot)
-	if err != nil {
-		return err
-	}
-
-	err = bootCustomizer.PrepareForVerity()
-	if err != nil {
-		return err
-	}
-
-	err = bootCustomizer.WriteToFile(imageChroot)
 	if err != nil {
 		return err
 	}

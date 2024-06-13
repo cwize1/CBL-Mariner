@@ -44,13 +44,13 @@ func shrinkFilesystems(imageLoopDevice string) error {
 		logger.Log.Infof("Shrinking partition (%s)", partitionLoopDevice)
 
 		// Check the file system with e2fsck
-		err := shell.ExecuteLive(true /*squashErrors*/, "sudo", "e2fsck", "-fy", partitionLoopDevice)
+		err := shell.ExecuteLive(true /*squashErrors*/, "e2fsck", "-fy", partitionLoopDevice)
 		if err != nil {
 			return fmt.Errorf("failed to check %s with e2fsck:\n%w", partitionLoopDevice, err)
 		}
 
 		// Shrink the file system with resize2fs -M
-		stdout, stderr, err := shell.Execute("sudo", "resize2fs", "-M", partitionLoopDevice)
+		stdout, stderr, err := shell.Execute("resize2fs", "-M", partitionLoopDevice)
 		if err != nil {
 			return fmt.Errorf("failed to resize %s with resize2fs:\n%v", partitionLoopDevice, stderr)
 		}
@@ -68,7 +68,7 @@ func shrinkFilesystems(imageLoopDevice string) error {
 		}
 
 		// Resize the partition with parted resizepart
-		_, stderr, err = shell.ExecuteWithStdin("yes" /*stdin*/, "sudo", "parted", "---pretend-input-tty", imageLoopDevice, "resizepart", strconv.Itoa(partitionNum), end)
+		_, stderr, err = shell.ExecuteWithStdin("yes" /*stdin*/, "parted", "---pretend-input-tty", imageLoopDevice, "resizepart", strconv.Itoa(partitionNum), end)
 		if err != nil {
 			return fmt.Errorf("failed to resizepart %s with parted:\n%v", partitionLoopDevice, stderr)
 		}
@@ -84,7 +84,7 @@ func shrinkFilesystems(imageLoopDevice string) error {
 
 // Get the start sectors of all partitions.
 func getStartSectors(imageLoopDevice string, partitionCount int) (matchStarts [][]string, err error) {
-	stdout, stderr, err := shell.Execute("sudo", "fdisk", "-l", imageLoopDevice)
+	stdout, stderr, err := shell.Execute("fdisk", "-l", imageLoopDevice)
 	if err != nil {
 		return nil, fmt.Errorf("fdisk failed to list partitions:\n%v", stderr)
 	}

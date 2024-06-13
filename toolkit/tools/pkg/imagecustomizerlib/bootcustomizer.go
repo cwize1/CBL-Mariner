@@ -21,6 +21,9 @@ type BootCustomizer struct {
 
 	// Whether or not the image is using grub-mkconfig.
 	isGrubMkconfig bool
+
+	// Set when the contents have been modified but not flushed to disk.
+	invalidated bool
 }
 
 func NewBootCustomizer(imageChroot *safechroot.Chroot) (*BootCustomizer, error) {
@@ -40,6 +43,7 @@ func NewBootCustomizer(imageChroot *safechroot.Chroot) (*BootCustomizer, error) 
 		grubCfgContent:         grubCfgContent,
 		defaultGrubFileContent: defaultGrubFileContent,
 		isGrubMkconfig:         isGrubMkconfig,
+		invalidated:            false,
 	}
 	return b, nil
 }
@@ -73,6 +77,7 @@ func (b *BootCustomizer) AddKernelCommandLine(extraCommandLine string) error {
 		b.grubCfgContent = grubCfgContent
 	}
 
+	b.invalidated = true
 	return nil
 }
 
@@ -156,6 +161,7 @@ func (b *BootCustomizer) UpdateKernelCommandLineArgs(defaultGrubFileVarName defa
 		b.grubCfgContent = grubCfgContent
 	}
 
+	b.invalidated = true
 	return nil
 }
 
@@ -178,12 +184,31 @@ func (b *BootCustomizer) PrepareForVerity() error {
 		}
 
 		b.defaultGrubFileContent = defaultGrubFileContent
+		b.invalidated = true
 	}
 
 	return nil
 }
 
-func (b *BootCustomizer) WriteToFile(imageChroot *safechroot.Chroot) error {
+func (b *BootCustomizer) Invalidate() {
+	b.invalidated = true
+}
+
+// Updates the grub config files on disk.
+func (b *BootCustomizer) FlushToFile(imageChroot *safechroot.Chroot) error {
+	if b.invalidated {
+		err := b.writeToFile(imageChroot)
+		if err != nil {
+			return err
+		}
+
+		b.invalidated = false
+	}
+
+	return nil
+}
+
+func (b *BootCustomizer) writeToFile(imageChroot *safechroot.Chroot) error {
 	if b.isGrubMkconfig {
 		// Update /etc/defaukt/grub file.
 		err := writeDefaultGrubFile(b.defaultGrubFileContent, imageChroot)

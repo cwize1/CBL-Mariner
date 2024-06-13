@@ -12,7 +12,9 @@ import (
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/safechroot"
 )
 
-func enableOverlays(overlays *[]imagecustomizerapi.Overlay, imageChroot *safechroot.Chroot) (bool, error) {
+func enableOverlays(overlays *[]imagecustomizerapi.Overlay, imageChroot *safechroot.Chroot,
+	bootCustomizer *BootCustomizer,
+) (bool, error) {
 	var err error
 
 	if overlays == nil {
@@ -31,7 +33,7 @@ func enableOverlays(overlays *[]imagecustomizerapi.Overlay, imageChroot *safechr
 
 	// Dereference the pointer to get the slice
 	overlaysDereference := *overlays
-	err = updateGrubConfigForOverlay(imageChroot, overlaysDereference)
+	err = updateGrubConfigForOverlay(overlaysDereference, bootCustomizer)
 	if err != nil {
 		return false, fmt.Errorf("failed to update grub config for filesystem overlays:\n%w", err)
 	}
@@ -39,7 +41,7 @@ func enableOverlays(overlays *[]imagecustomizerapi.Overlay, imageChroot *safechr
 	return true, nil
 }
 
-func updateGrubConfigForOverlay(imageChroot *safechroot.Chroot, overlays []imagecustomizerapi.Overlay) error {
+func updateGrubConfigForOverlay(overlays []imagecustomizerapi.Overlay, bootCustomizer *BootCustomizer) error {
 	var err error
 	var overlayConfigs []string
 	var formattedPartition string
@@ -69,18 +71,8 @@ func updateGrubConfigForOverlay(imageChroot *safechroot.Chroot, overlays []image
 		fmt.Sprintf("rd.overlayfs=%s", concatenatedOverlays),
 	}
 
-	bootCustomizer, err := NewBootCustomizer(imageChroot)
-	if err != nil {
-		return err
-	}
-
 	err = bootCustomizer.UpdateKernelCommandLineArgs(defaultGrubFileVarNameCmdlineLinux, []string{"rd.overlayfs"},
 		newArgs)
-	if err != nil {
-		return err
-	}
-
-	err = bootCustomizer.WriteToFile(imageChroot)
 	if err != nil {
 		return err
 	}

@@ -12,11 +12,12 @@ type ResetBootLoaderType string
 const (
 	ResetBootLoaderTypeDefault ResetBootLoaderType = ""
 	ResetBootLoaderTypeHard    ResetBootLoaderType = "hard-reset"
+	ResetBootLoaderTypeRegen   ResetBootLoaderType = "regen"
 )
 
 func (t ResetBootLoaderType) IsValid() error {
 	switch t {
-	case ResetBootLoaderTypeDefault, ResetBootLoaderTypeHard:
+	case ResetBootLoaderTypeDefault, ResetBootLoaderTypeHard, ResetBootLoaderTypeRegen:
 		// All good.
 		return nil
 

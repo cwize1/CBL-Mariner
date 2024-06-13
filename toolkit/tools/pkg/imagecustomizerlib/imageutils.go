@@ -109,7 +109,7 @@ func createNewImageHelper(imageConnection *ImageConnection, filename string, dis
 	}
 
 	// Move the fstab file into the image.
-	imageFstabFilePath := filepath.Join(imageConnection.Chroot().RootDir(), "etc/fstab")
+	imageFstabFilePath := filepath.Join(imageConnection.Chroot().RootDir(), fstabPath)
 
 	err = file.Move(tmpFstabFile, imageFstabFilePath)
 	if err != nil {
@@ -119,7 +119,7 @@ func createNewImageHelper(imageConnection *ImageConnection, filename string, dis
 	return nil
 }
 
-func configureDiskBootLoader(imageConnection *ImageConnection, fileSystems []imagecustomizerapi.FileSystem,
+func configureDiskBootLoader(imageConnection *ImageConnection, rootMountIdType imagecustomizerapi.MountIdentifierType,
 	bootType imagecustomizerapi.BootType, selinuxConfig imagecustomizerapi.SELinux,
 	kernelCommandLine imagecustomizerapi.KernelCommandLine, currentSELinuxMode imagecustomizerapi.SELinuxMode,
 ) error {
@@ -133,7 +133,7 @@ func configureDiskBootLoader(imageConnection *ImageConnection, fileSystems []ima
 		return err
 	}
 
-	imagerPartitionSettings, err := partitionSettingsToImager(fileSystems)
+	imagerRootMountIdType, err := mountIdentifierTypeToImager(rootMountIdType)
 	if err != nil {
 		return err
 	}
@@ -149,10 +149,10 @@ func configureDiskBootLoader(imageConnection *ImageConnection, fileSystems []ima
 	}
 
 	// Configure the boot loader.
-	err = installutils.ConfigureDiskBootloader(imagerBootType, false, false, imagerPartitionSettings,
-		imagerKernelCommandLine, imageConnection.Chroot(), imageConnection.Loopback().DevicePath(),
-		mountPointMap, diskutils.EncryptedRootDevice{}, diskutils.VerityDevice{}, grubMkconfigEnabled,
-		!grubMkconfigEnabled)
+	err = installutils.ConfigureDiskBootloaderWithRootMountIdType(imagerBootType, false, false,
+		imagerRootMountIdType, imagerKernelCommandLine, imageConnection.Chroot(),
+		imageConnection.Loopback().DevicePath(), mountPointMap, diskutils.EncryptedRootDevice{},
+		diskutils.VerityDevice{}, grubMkconfigEnabled, !grubMkconfigEnabled)
 	if err != nil {
 		return fmt.Errorf("failed to install bootloader:\n%w", err)
 	}

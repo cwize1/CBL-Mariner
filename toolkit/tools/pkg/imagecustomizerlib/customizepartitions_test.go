@@ -63,7 +63,7 @@ func TestCustomizeImagePartitions(t *testing.T) {
 	defer imageConnection.Close()
 
 	// Check for key files/directories on the partitions.
-	fstabPath := filepath.Join(imageConnection.Chroot().RootDir(), "/etc/fstab")
+	fstabPath := filepath.Join(imageConnection.Chroot().RootDir(), fstabPath)
 	_, err = os.Stat(fstabPath)
 	assert.NoError(t, err, "check for /etc/fstab")
 

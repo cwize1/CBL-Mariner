@@ -13,6 +13,7 @@ import (
 
 	"github.com/microsoft/azurelinux/toolkit/tools/imagecustomizerapi"
 	"github.com/microsoft/azurelinux/toolkit/tools/imagegen/configuration"
+	"github.com/microsoft/azurelinux/toolkit/tools/imagegen/diskutils"
 	"github.com/microsoft/azurelinux/toolkit/tools/imagegen/installutils"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/file"
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/logger"
@@ -36,6 +37,16 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 	imageChroot := imageConnection.Chroot()
 
 	buildTime := time.Now().Format("2006-01-02T15:04:05Z")
+
+	bootCustomizer, err := NewBootCustomizer(imageChroot)
+	if err != nil {
+		return err
+	}
+
+	err = handleResetPartitionsUuids(config.OS.ResetPartitionsUuidsType, imageConnection)
+	if err != nil {
+		return fmt.Errorf("failed to reset partitions UUIDs:\n%w", err)
+	}
 
 	err = overrideResolvConf(imageChroot)
 	if err != nil {
@@ -83,23 +94,28 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	err = handleBootLoader(baseConfigPath, config, imageConnection)
+	err = handleBootLoader(baseConfigPath, config, imageConnection, bootCustomizer)
 	if err != nil {
 		return err
 	}
 
 	selinuxMode, err := handleSELinux(config.OS.SELinux.Mode, config.OS.ResetBootLoaderType,
-		imageChroot)
+		imageChroot, bootCustomizer)
 	if err != nil {
 		return err
 	}
 
-	overlayUpdated, err := enableOverlays(config.OS.Overlays, imageChroot)
+	overlayUpdated, err := enableOverlays(config.OS.Overlays, imageChroot, bootCustomizer)
 	if err != nil {
 		return err
 	}
 
-	verityUpdated, err := enableVerityPartition(buildDir, config.OS.Verity, imageChroot)
+	verityUpdated, err := enableVerityPartition(buildDir, config.OS.Verity, imageChroot, bootCustomizer)
+	if err != nil {
+		return err
+	}
+
+	err = bootCustomizer.FlushToFile(imageChroot)
 	if err != nil {
 		return err
 	}
@@ -406,34 +422,24 @@ func addCustomizerRelease(imageChroot *safechroot.Chroot, toolVersion string, bu
 }
 
 func handleBootLoader(baseConfigPath string, config *imagecustomizerapi.Config, imageConnection *ImageConnection,
+	bootCustomizer *BootCustomizer,
 ) error {
-	bootCustomizer, err := NewBootCustomizer(imageConnection.Chroot())
-	if err != nil {
-		return err
-	}
-
-	currentSelinuxMode, err := bootCustomizer.GetSELinuxMode(imageConnection.Chroot())
-	if err != nil {
-		return fmt.Errorf("failed to get existing SELinux mode:\n%w", err)
-	}
-
 	switch config.OS.ResetBootLoaderType {
 	case imagecustomizerapi.ResetBootLoaderTypeHard:
-		logger.Log.Infof("Resetting bootloader config")
-
-		if config.Storage == nil {
-			return fmt.Errorf("failed to configure bootloader. Missing 'storage' configuration.")
-		}
-		// Hard-reset the grub config.
-		err := configureDiskBootLoader(imageConnection, config.Storage.FileSystems,
-			config.Storage.BootType, config.OS.SELinux, config.OS.KernelCommandLine, currentSelinuxMode)
+		err := hardResetBootLoader(baseConfigPath, config, imageConnection, bootCustomizer)
 		if err != nil {
-			return fmt.Errorf("failed to configure bootloader:\n%w", err)
+			return fmt.Errorf("failed to hard-reset bootloader config:\n%w", err)
+		}
+
+	case imagecustomizerapi.ResetBootLoaderTypeRegen:
+		err := regenBootLoader(imageConnection, bootCustomizer)
+		if err != nil {
+			return fmt.Errorf("failed to regen bootloader config:\n%w", err)
 		}
 
 	default:
 		// Append the kernel command-line args to the existing grub config.
-		err := addKernelCommandLine(config.OS.KernelCommandLine.ExtraCommandLine, imageConnection.Chroot())
+		err := addKernelCommandLine(config.OS.KernelCommandLine.ExtraCommandLine, bootCustomizer)
 		if err != nil {
 			return fmt.Errorf("failed to add extra kernel command line:\n%w", err)
 		}
@@ -442,9 +448,110 @@ func handleBootLoader(baseConfigPath string, config *imagecustomizerapi.Config, 
 	return nil
 }
 
+func hardResetBootLoader(baseConfigPath string, config *imagecustomizerapi.Config, imageConnection *ImageConnection,
+	bootCustomizer *BootCustomizer,
+) error {
+	var err error
+	logger.Log.Infof("Hard reset bootloader config")
+
+	currentSelinuxMode, err := bootCustomizer.GetSELinuxMode(imageConnection.Chroot())
+	if err != nil {
+		return fmt.Errorf("failed to get existing SELinux mode:\n%w", err)
+	}
+
+	var rootMountIdType imagecustomizerapi.MountIdentifierType
+	var bootType imagecustomizerapi.BootType
+	if config.Storage != nil {
+		rootFileSystem, foundRootFileSystem := sliceutils.FindValueFunc(config.Storage.FileSystems,
+			func(filsSystem imagecustomizerapi.FileSystem) bool {
+				return filsSystem.MountPoint != nil &&
+					filsSystem.MountPoint.Path == "/"
+			},
+		)
+		if !foundRootFileSystem {
+			return fmt.Errorf("failed to find root filesystem (i.e. mount equal to '/')")
+		}
+
+		rootMountIdType = rootFileSystem.MountPoint.IdType
+		bootType = config.Storage.BootType
+	} else {
+		rootMountIdType, err = findRootMountIdTypeFromFstabFile(imageConnection)
+		if err != nil {
+			return fmt.Errorf("failed to get image's root mount ID type:\n%w", err)
+		}
+
+		bootType, err = getImageBootType(imageConnection)
+		if err != nil {
+			return fmt.Errorf("failed to get image's boot type:\n%w", err)
+		}
+	}
+
+	// Hard-reset the grub config.
+	err = configureDiskBootLoader(imageConnection, rootMountIdType,
+		bootType, config.OS.SELinux, config.OS.KernelCommandLine, currentSelinuxMode)
+	if err != nil {
+		return fmt.Errorf("failed to configure bootloader:\n%w", err)
+	}
+
+	return nil
+}
+
+func regenBootLoader(imageConnection *ImageConnection, bootCustomizer *BootCustomizer) error {
+	if !bootCustomizer.IsGrubMkconfigImage() {
+		return fmt.Errorf("unsupported image type:\ngrub-mkconfig is not enabled")
+	}
+
+	bootCustomizer.Invalidate()
+
+	diskPartitions, err := diskutils.GetDiskPartitions(imageConnection.Loopback().DevicePath())
+	if err != nil {
+		return err
+	}
+
+	bootType, err := getImageBootTypeHelper(diskPartitions)
+	if err != nil {
+		return fmt.Errorf("failed to get image's boot type:\n%w", err)
+	}
+
+	imagerBootType, err := bootTypeToImager(bootType)
+	if err != nil {
+		return err
+	}
+
+	bootDirPath := filepath.Join(imageConnection.Chroot().RootDir(), "/boot")
+	bootPartition, hasSeparateBootPartition := sliceutils.FindValueFunc(diskPartitions,
+		func(partition diskutils.PartitionInfo) bool {
+			return partition.Mountpoint == bootDirPath
+		},
+	)
+
+	bootPrefix := ""
+	if !hasSeparateBootPartition {
+		rootPartition, hasRootPartition := sliceutils.FindValueFunc(diskPartitions,
+			func(partition diskutils.PartitionInfo) bool {
+				return partition.Mountpoint == imageConnection.Chroot().RootDir()
+			},
+		)
+		if !hasRootPartition {
+			return fmt.Errorf("internal error: could not find root partition")
+		}
+
+		bootPrefix = installutils.CombinedBootPartitionBootPrefix
+		bootPartition = rootPartition
+	}
+
+	err = installutils.InstallBootloader(imageConnection.Chroot(), false /*encryptEnabled*/, imagerBootType,
+		bootPartition.Uuid, bootPrefix, bootPartition.Path)
+	if err != nil {
+		return fmt.Errorf("failed to reinstall bootloader:\n%w", err)
+	}
+
+	return nil
+}
+
 // Inserts new kernel command-line args into the grub config file.
 func addKernelCommandLine(kernelExtraArguments imagecustomizerapi.KernelExtraArguments,
-	imageChroot *safechroot.Chroot,
+	bootCustomizer *BootCustomizer,
 ) error {
 	var err error
 
@@ -455,17 +562,7 @@ func addKernelCommandLine(kernelExtraArguments imagecustomizerapi.KernelExtraArg
 
 	logger.Log.Infof("Setting KernelCommandLine.ExtraCommandLine")
 
-	bootCustomizer, err := NewBootCustomizer(imageChroot)
-	if err != nil {
-		return err
-	}
-
 	err = bootCustomizer.AddKernelCommandLine(string(kernelExtraArguments))
-	if err != nil {
-		return err
-	}
-
-	err = bootCustomizer.WriteToFile(imageChroot)
 	if err != nil {
 		return err
 	}
@@ -474,14 +571,9 @@ func addKernelCommandLine(kernelExtraArguments imagecustomizerapi.KernelExtraArg
 }
 
 func handleSELinux(selinuxMode imagecustomizerapi.SELinuxMode, resetBootLoaderType imagecustomizerapi.ResetBootLoaderType,
-	imageChroot *safechroot.Chroot,
+	imageChroot *safechroot.Chroot, bootCustomizer *BootCustomizer,
 ) (imagecustomizerapi.SELinuxMode, error) {
 	var err error
-
-	bootCustomizer, err := NewBootCustomizer(imageChroot)
-	if err != nil {
-		return imagecustomizerapi.SELinuxModeDefault, err
-	}
 
 	if selinuxMode == imagecustomizerapi.SELinuxModeDefault {
 		// No changes to the SELinux have been requested.
@@ -504,11 +596,6 @@ func handleSELinux(selinuxMode imagecustomizerapi.SELinuxMode, resetBootLoaderTy
 	default:
 		// Update the SELinux kernel command-line args.
 		err := bootCustomizer.UpdateSELinuxCommandLine(selinuxMode)
-		if err != nil {
-			return imagecustomizerapi.SELinuxModeDefault, err
-		}
-
-		err = bootCustomizer.WriteToFile(imageChroot)
 		if err != nil {
 			return imagecustomizerapi.SELinuxModeDefault, err
 		}
