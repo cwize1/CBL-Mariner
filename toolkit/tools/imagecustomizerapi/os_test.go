@@ -169,7 +169,7 @@ func TestOSIsValidModuleDuplicateName(t *testing.T) {
 
 func TestOSIsValidInvalidOverlay(t *testing.T) {
 	os := OS{
-		Overlays: &[]Overlay{
+		BootstrapOverlays: &[]BootstrapOverlay{
 			{},
 		},
 	}
@@ -180,7 +180,7 @@ func TestOSIsValidInvalidOverlay(t *testing.T) {
 
 func TestOSIsValidOverlayDuplicateUpperDir(t *testing.T) {
 	os := OS{
-		Overlays: &[]Overlay{
+		BootstrapOverlays: &[]BootstrapOverlay{
 			{
 				LowerDir: "/",
 				UpperDir: "/upper_root",
@@ -200,7 +200,7 @@ func TestOSIsValidOverlayDuplicateUpperDir(t *testing.T) {
 
 func TestOSIsValidOverlayDuplicateWorkDir(t *testing.T) {
 	os := OS{
-		Overlays: &[]Overlay{
+		BootstrapOverlays: &[]BootstrapOverlay{
 			{
 				LowerDir: "/",
 				UpperDir: "/upper_root",

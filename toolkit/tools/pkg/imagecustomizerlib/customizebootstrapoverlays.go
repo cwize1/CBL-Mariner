@@ -12,7 +12,7 @@ import (
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/safechroot"
 )
 
-func enableOverlays(overlays *[]imagecustomizerapi.Overlay, imageChroot *safechroot.Chroot) (bool, error) {
+func enableBootstrapOverlays(overlays *[]imagecustomizerapi.BootstrapOverlay, imageChroot *safechroot.Chroot) (bool, error) {
 	var err error
 
 	if overlays == nil {
@@ -39,7 +39,7 @@ func enableOverlays(overlays *[]imagecustomizerapi.Overlay, imageChroot *safechr
 	return true, nil
 }
 
-func updateGrubConfigForOverlay(imageChroot *safechroot.Chroot, overlays []imagecustomizerapi.Overlay) error {
+func updateGrubConfigForOverlay(imageChroot *safechroot.Chroot, overlays []imagecustomizerapi.BootstrapOverlay) error {
 	var err error
 	var overlayConfigs []string
 	var formattedPartition string

@@ -23,7 +23,7 @@ type OS struct {
 	Services            Services            `yaml:"services"`
 	Modules             []Module            `yaml:"modules"`
 	Verity              *Verity             `yaml:"verity"`
-	Overlays            *[]Overlay          `yaml:"overlays"`
+	BootstrapOverlays   *[]BootstrapOverlay `yaml:"bootstrapOverlays"`
 }
 
 func (s *OS) IsValid() error {
@@ -90,11 +90,11 @@ func (s *OS) IsValid() error {
 		}
 	}
 
-	if s.Overlays != nil {
+	if s.BootstrapOverlays != nil {
 		upperDirs := make(map[string]bool)
 		workDirs := make(map[string]bool)
 
-		for i, overlay := range *s.Overlays {
+		for i, overlay := range *s.BootstrapOverlays {
 			// Validate the overlay itself
 			err := overlay.IsValid()
 			if err != nil {

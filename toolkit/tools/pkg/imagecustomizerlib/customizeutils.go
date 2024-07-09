@@ -94,7 +94,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	overlayUpdated, err := enableOverlays(config.OS.Overlays, imageChroot)
+	overlayUpdated, err := enableBootstrapOverlays(config.OS.BootstrapOverlays, imageChroot)
 	if err != nil {
 		return err
 	}

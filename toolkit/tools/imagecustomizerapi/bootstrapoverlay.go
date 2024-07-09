@@ -8,14 +8,14 @@ import (
 	"strings"
 )
 
-type Overlay struct {
+type BootstrapOverlay struct {
 	LowerDir  string               `yaml:"lowerDir"`
 	UpperDir  string               `yaml:"upperDir"`
 	WorkDir   string               `yaml:"workDir"`
 	Partition *IdentifiedPartition `yaml:"partition"`
 }
 
-func (o *Overlay) IsValid() error {
+func (o *BootstrapOverlay) IsValid() error {
 	// Validate paths for UpperDir, WorkDir, and LowerDir
 	if err := validatePath(o.UpperDir); err != nil {
 		return fmt.Errorf("invalid upperDir (%s):\n%w", o.UpperDir, err)

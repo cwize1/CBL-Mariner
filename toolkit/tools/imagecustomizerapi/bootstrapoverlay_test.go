@@ -10,7 +10,7 @@ import (
 )
 
 func TestOverlayValidConfiguration(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir: "/lower",
 		UpperDir: "/upper",
 		WorkDir:  "/work",
@@ -25,7 +25,7 @@ func TestOverlayValidConfiguration(t *testing.T) {
 }
 
 func TestOverlayInvalidEmptyLowerDir(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir: "",
 		UpperDir: "/upper",
 		WorkDir:  "/work",
@@ -37,7 +37,7 @@ func TestOverlayInvalidEmptyLowerDir(t *testing.T) {
 }
 
 func TestOverlayInvalidInvalidWorkDir(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir: "/lower",
 		UpperDir: "/upper",
 		WorkDir:  " ",
@@ -49,7 +49,7 @@ func TestOverlayInvalidInvalidWorkDir(t *testing.T) {
 }
 
 func TestOverlayInvalidSameUpperAndWorkDir(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir: "/lower",
 		UpperDir: "/invalid/same",
 		WorkDir:  "/invalid/same",
@@ -61,7 +61,7 @@ func TestOverlayInvalidSameUpperAndWorkDir(t *testing.T) {
 }
 
 func TestOverlayInvalidWorkDirSubsUpperDir(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir: "/lower",
 		UpperDir: "/invalid",
 		WorkDir:  "/invalid/same",
@@ -73,7 +73,7 @@ func TestOverlayInvalidWorkDirSubsUpperDir(t *testing.T) {
 }
 
 func TestOverlayInvalidUpperDirSubsWorkDir(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir: "/lower",
 		UpperDir: "/invalid/same",
 		WorkDir:  "/invalid",
@@ -85,7 +85,7 @@ func TestOverlayInvalidUpperDirSubsWorkDir(t *testing.T) {
 }
 
 func TestOverlayInvalidPartition(t *testing.T) {
-	overlay := Overlay{
+	overlay := BootstrapOverlay{
 		LowerDir:  "/lower",
 		UpperDir:  "/upper",
 		WorkDir:   "/work",
