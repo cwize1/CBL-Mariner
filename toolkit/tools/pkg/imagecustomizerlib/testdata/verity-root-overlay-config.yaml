@@ -1,0 +1,94 @@
+storage:
+  disks:
+  - partitionTableType: gpt
+    maxSize: 6G
+    partitions:
+    - id: esp
+      type: esp
+      start: 1M
+      end: 9M
+
+    - id: boot
+      start: 9M
+      end: 108M
+
+    - id: rootfs
+      label: rootfs
+      start: 108M
+      end: 2G
+
+    - id: roothash
+      label: roothash
+      start: 2G
+      end: 3G
+
+    - id: writeoverlay
+      label: writeoverlay
+      start: 3G
+
+  bootType: efi
+
+  fileSystems:
+  - deviceId: esp
+    type: fat32
+    mountPoint:
+      path: /boot/efi
+      options: umask=0077
+
+  - deviceId: boot
+    type: ext4
+    mountPoint:
+      path: /boot
+
+  - deviceId: rootfs
+    type: ext4
+    mountPoint:
+      path: /
+
+  - deviceId: roothash
+    type: fat32
+
+  - deviceId: writeoverlay
+    type: ext4
+
+os:
+  resetBootLoaderType: hard-reset
+
+  selinux:
+    mode: disabled
+
+  kernelCommandLine:
+    extraCommandLine: console=tty0 console=ttyS0 rd.break=cleanup
+
+  packages:
+    install:
+    - openssh-server
+    - veritysetup
+    - vim
+
+  users:
+  - name: root
+    password:
+      type: plain-text
+      value: hello
+
+  overlays:
+  - lowerDir: /
+    upperDir: /upper
+    workDir: /work
+    partition:
+      idType: part-label
+      id: writeoverlay
+
+  verity:
+    dataPartition:
+      idType: part-label
+      id: rootfs
+    hashPartition:
+      idType: part-label
+      id: roothash
+
+  additionalFiles:
+    # Workaround until updated dracut-overlayfs package has been published.
+    ../../../../../SPECS/dracut/20overlayfs/module-setup.sh: /lib/dracut/modules.d/20overlayfs/module-setup.sh
+    ../../../../../SPECS/dracut/20overlayfs/overlayfs-mount.sh: /lib/dracut/modules.d/20overlayfs/overlayfs-mount.sh
