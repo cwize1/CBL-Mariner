@@ -94,7 +94,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	err = handleOverlays(config.OS.Overlays, imageChroot)
+	overlaysUpdated, err := handleOverlays(config.OS.Overlays, imageChroot)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func doCustomizations(buildDir string, baseConfigPath string, config *imagecusto
 		return err
 	}
 
-	if partitionsCustomized || bootstrapOverlaysUpdated || verityUpdated {
+	if partitionsCustomized || overlaysUpdated || bootstrapOverlaysUpdated || verityUpdated {
 		err = regenerateInitrd(imageChroot)
 		if err != nil {
 			return err

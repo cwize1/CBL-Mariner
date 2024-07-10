@@ -23,7 +23,6 @@ storage:
       end: 3G
 
     - id: var
-      label: var
       start: 3G
 
   bootType: efi
@@ -52,12 +51,13 @@ storage:
     type: ext4
     mountPoint:
       path: /var
+      options: x-initrd.mount
 
 os:
   resetBootLoaderType: hard-reset
 
   kernelCommandLine:
-    extraCommandLine: rd.break
+    extraCommandLine: rd.break=cleanup
 
   selinux:
     mode: disabled
@@ -79,36 +79,42 @@ os:
     lower: /etc
     upper: /var/overlays/etc/upper
     work: /var/overlays/etc/work
-    options: x-systemd.requires-mounts-for=/var
+    options: x-systemd.requires=/var
 
   - target: /home
     lower: /home
     upper: /var/overlays/home/upper
     work: /var/overlays/home/work
-    options: x-systemd.requires-mounts-for=/var
+    options: x-systemd.requires=/var
 
   - target: /opt
     lower: /opt
     upper: /var/overlays/opt/upper
     work: /var/overlays/opt/work
-    options: x-systemd.requires-mounts-for=/var
+    options: x-systemd.requires=/var
     
   - target: /root
     lower: /root
     upper: /var/overlays/root/upper
     work: /var/overlays/root/work
-    options: x-systemd.requires-mounts-for=/var
+    options: x-systemd.requires=/var
 
   - target: /usr
     lower: /usr
     upper: /var/overlays/usr/upper
     work: /var/overlays/usr/work
-    options: x-systemd.requires-mounts-for=/var
+    options: x-systemd.requires=/var
+    
+  - target: /var
+    lower: /var
+    upper: /var/overlays/var/upper
+    work: /var/overlays/var/work
+    options: x-systemd.requires=/var
 
-  verity:
-    dataPartition:
-      idType: part-label
-      id: rootfs
-    hashPartition:
-      idType: part-label
-      id: roothash
+  #verity:
+  #  dataPartition:
+  #    idType: part-label
+  #    id: rootfs
+  #  hashPartition:
+  #    idType: part-label
+  #    id: roothash

@@ -28,7 +28,7 @@ func enableVerityPartition(buildDir string, verity *imagecustomizerapi.Verity, i
 	// Integrate systemd veritysetup dracut module into initramfs img.
 	systemdVerityDracutModule := "systemd-veritysetup"
 	dmVerityDracutDriver := "dm-verity"
-	err = addDracutModule(systemdVerityDracutModule, dmVerityDracutDriver, imageChroot)
+	err = addDracutModule(systemdVerityDracutModule, systemdVerityDracutModule, dmVerityDracutDriver, imageChroot)
 	if err != nil {
 		return false, fmt.Errorf("failed to add dracut modules for verity:\n%w", err)
 	}
@@ -46,16 +46,20 @@ func enableVerityPartition(buildDir string, verity *imagecustomizerapi.Verity, i
 	return true, nil
 }
 
-func addDracutModule(dracutModuleName string, dracutDriverName string, imageChroot *safechroot.Chroot) error {
-	dracutConfigFile := filepath.Join(imageChroot.RootDir(), "etc", "dracut.conf.d", dracutModuleName+".conf")
+func addDracutModule(dracutConfigFileName string, dracutModules string, dracutDrivers string, imageChroot *safechroot.Chroot) error {
+	dracutConfigFile := filepath.Join(imageChroot.RootDir(), "etc", "dracut.conf.d", dracutConfigFileName+".conf")
 
 	// Check if the dracut module configuration file already exists.
 	if _, err := os.Stat(dracutConfigFile); os.IsNotExist(err) {
-		lines := []string{
-			// Add white spaces on both sides for dracut config syntax.
-			"add_dracutmodules+=\" " + dracutModuleName + " \"",
-			"add_drivers+=\" " + dracutDriverName + " \"",
+		lines := []string(nil)
+		if dracutModules != "" {
+			lines = append(lines, "add_dracutmodules+=\" "+dracutModules+" \"")
 		}
+
+		if dracutDrivers != "" {
+			lines = append(lines, "add_drivers+=\" "+dracutDrivers+" \"")
+		}
+
 		err = file.WriteLines(lines, dracutConfigFile)
 		if err != nil {
 			return fmt.Errorf("failed to write to dracut module config file (%s): %w", dracutConfigFile, err)

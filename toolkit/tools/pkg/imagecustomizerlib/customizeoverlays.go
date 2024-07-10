@@ -13,15 +13,22 @@ import (
 	"github.com/microsoft/azurelinux/toolkit/tools/internal/safechroot"
 )
 
-func handleOverlays(overlays []imagecustomizerapi.Overlay, imageChroot *safechroot.Chroot) error {
+func handleOverlays(overlays []imagecustomizerapi.Overlay, imageChroot *safechroot.Chroot) (bool, error) {
 	if len(overlays) <= 0 {
-		return nil
+		return false, nil
+	}
+
+	// Add overlay module to dracut, since systemd will mount some of the /etc/fstab entries during the initramfs phase.
+	// Specifically, those that touch core directories such as /usr.
+	err := addDracutModule("overlay", "", "overlay", imageChroot)
+	if err != nil {
+		return false, err
 	}
 
 	fstabFile := filepath.Join(imageChroot.RootDir(), "/etc/fstab")
 	fstabEntries, err := diskutils.ReadFstabFile(fstabFile)
 	if err != nil {
-		return fmt.Errorf("failed to read fstab file:\n%w", err)
+		return false, fmt.Errorf("failed to read fstab file:\n%w", err)
 	}
 
 	for _, overlay := range overlays {
@@ -46,22 +53,22 @@ func handleOverlays(overlays []imagecustomizerapi.Overlay, imageChroot *safechro
 			return os.MkdirAll(overlay.Upper, 0o755)
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create overlay upper directory:\n%w", err)
+			return false, fmt.Errorf("failed to create overlay upper directory:\n%w", err)
 		}
 
 		err = imageChroot.UnsafeRun(func() error {
 			return os.MkdirAll(overlay.Work, 0o755)
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create overlay work directory:\n%w", err)
+			return false, fmt.Errorf("failed to create overlay work directory:\n%w", err)
 		}
 	}
 
 	// Write the updated fstab entries back to the fstab file
 	err = diskutils.WriteFstabFile(fstabEntries, fstabFile)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }

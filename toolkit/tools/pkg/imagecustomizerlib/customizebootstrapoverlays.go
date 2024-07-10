@@ -24,7 +24,7 @@ func enableBootstrapOverlays(overlays *[]imagecustomizerapi.BootstrapOverlay, im
 	// Integrate overlay dracut module and overlay driver into initramfs img.
 	overlayDracutModule := "overlayfs"
 	overlayDracutDriver := "overlay"
-	err = addDracutModule(overlayDracutModule, overlayDracutDriver, imageChroot)
+	err = addDracutModule(overlayDracutModule, overlayDracutModule, overlayDracutDriver, imageChroot)
 	if err != nil {
 		return false, err
 	}
