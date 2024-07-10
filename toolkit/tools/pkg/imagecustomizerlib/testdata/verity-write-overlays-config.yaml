@@ -22,8 +22,8 @@ storage:
       start: 2G
       end: 3G
 
-    - id: writeoverlay
-      label: writeoverlay
+    - id: var
+      label: var
       start: 3G
 
   bootType: efi
@@ -48,17 +48,19 @@ storage:
   - deviceId: roothash
     type: fat32
 
-  - deviceId: writeoverlay
+  - deviceId: var
     type: ext4
+    mountPoint:
+      path: /var
 
 os:
   resetBootLoaderType: hard-reset
 
+  kernelCommandLine:
+    extraCommandLine: rd.break
+
   selinux:
     mode: disabled
-
-  kernelCommandLine:
-    extraCommandLine: console=tty0 console=ttyS0 rd.break=cleanup
 
   packages:
     install:
@@ -73,12 +75,35 @@ os:
       value: hello
 
   overlays:
-  - lowerDir: /
-    upperDir: /upper
-    workDir: /work
-    partition:
-      idType: part-label
-      id: writeoverlay
+  - target: /etc
+    lower: /etc
+    upper: /var/overlays/etc/upper
+    work: /var/overlays/etc/work
+    options: x-systemd.requires-mounts-for=/var
+
+  - target: /home
+    lower: /home
+    upper: /var/overlays/home/upper
+    work: /var/overlays/home/work
+    options: x-systemd.requires-mounts-for=/var
+
+  - target: /opt
+    lower: /opt
+    upper: /var/overlays/opt/upper
+    work: /var/overlays/opt/work
+    options: x-systemd.requires-mounts-for=/var
+    
+  - target: /root
+    lower: /root
+    upper: /var/overlays/root/upper
+    work: /var/overlays/root/work
+    options: x-systemd.requires-mounts-for=/var
+
+  - target: /usr
+    lower: /usr
+    upper: /var/overlays/usr/upper
+    work: /var/overlays/usr/work
+    options: x-systemd.requires-mounts-for=/var
 
   verity:
     dataPartition:
@@ -87,8 +112,3 @@ os:
     hashPartition:
       idType: part-label
       id: roothash
-
-  additionalFiles:
-    # Workaround until updated dracut-overlayfs package has been published.
-    ../../../../../SPECS/dracut/20overlayfs/module-setup.sh: /lib/dracut/modules.d/20overlayfs/module-setup.sh
-    ../../../../../SPECS/dracut/20overlayfs/overlayfs-mount.sh: /lib/dracut/modules.d/20overlayfs/overlayfs-mount.sh

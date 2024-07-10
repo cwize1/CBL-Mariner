@@ -24,6 +24,7 @@ type OS struct {
 	Modules             []Module            `yaml:"modules"`
 	Verity              *Verity             `yaml:"verity"`
 	BootstrapOverlays   *[]BootstrapOverlay `yaml:"bootstrapOverlays"`
+	Overlays            []Overlay           `yaml:"overlays"`
 }
 
 func (s *OS) IsValid() error {
@@ -98,20 +99,28 @@ func (s *OS) IsValid() error {
 			// Validate the overlay itself
 			err := overlay.IsValid()
 			if err != nil {
-				return fmt.Errorf("invalid overlay at index %d:\n%w", i, err)
+				return fmt.Errorf("invalid bootstrapOverlay at index %d:\n%w", i, err)
 			}
 
 			// Check for unique UpperDir
 			if _, exists := upperDirs[overlay.UpperDir]; exists {
-				return fmt.Errorf("duplicate upperDir (%s) found in overlay at index %d", overlay.UpperDir, i)
+				return fmt.Errorf("duplicate upperDir (%s) found in bootstrapOverlay at index %d", overlay.UpperDir, i)
 			}
 			upperDirs[overlay.UpperDir] = true
 
 			// Check for unique WorkDir
 			if _, exists := workDirs[overlay.WorkDir]; exists {
-				return fmt.Errorf("duplicate workDir (%s) found in overlay at index %d", overlay.WorkDir, i)
+				return fmt.Errorf("duplicate workDir (%s) found in bootstrapOverlay at index %d", overlay.WorkDir, i)
 			}
 			workDirs[overlay.WorkDir] = true
+		}
+	}
+
+	for i, overlay := range s.Overlays {
+		// Validate the overlay itself
+		err := overlay.IsValid()
+		if err != nil {
+			return fmt.Errorf("invalid overlay at index %d:\n%w", i, err)
 		}
 	}
 
